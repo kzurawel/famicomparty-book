@@ -1,0 +1,385 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Famicom Party | Headers and Interrupt Vectors</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/prism.css">
+		<!-- Matomo -->
+		<script type="text/javascript">
+			var _paq = _paq || [];
+			/* tracker methods like "setCustomDimension" should be called before "trackPageView" */
+			_paq.push(['trackPageView']);
+			_paq.push(['enableLinkTracking']);
+			(function() {
+				var u="//analytics.famicom.party/";
+				_paq.push(['setTrackerUrl', u+'piwik.php']);
+				_paq.push(['setSiteId', '1']);
+				var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+				g.type='text/javascript'; g.async=true; g.defer=true; g.src=u+'piwik.js'; s.parentNode.insertBefore(g,s);
+			})();
+		</script>
+		<!-- End Matomo Code -->
+  </head>
+  <body>
+    <header class="header-wrapper">
+      <h1 class="site-title"><a href="/"><img src="/img/famicomparty.png" alt="famicom party"></a></h1>
+			<nav class="header-links">
+        <ul>
+          <li><a href="https://famicom.party">Home</a></li>
+          <li><a href="https://book.famicom.party">The Book</a></li>
+          <li><a href="https://blog.famicom.party">The Blog</a></li>
+        </ul>
+			</nav>
+    </header>
+    <div class="wrapper">
+      <article>
+        <h1>6. Headers and Interrupt Vectors</h1>
+
+        <section>
+          <p>
+            Last chapter, we covered the "main" section of the test project, which sets the background color
+            and then goes into an infinite loop. Yet that code only accounts for 13 lines out of the 44-line
+            test project source code. In this chapter, we'll explore the remainder of the test project's source
+            code and learn a few more opcodes.
+          </p>
+
+          <h2>iNES Headers</h2>
+
+          <p>
+            At the very beginning of the test project, we see this curious bit of assembly:
+          </p>
+
+          <pre class="code line-numbers"><code class="lang-asm6502">.segment "HEADER"
+.byte "NES", 26, 2, 1, 0, 0</code></pre>
+
+          <p>
+            <code>.segment</code>, since it begins with a period, is an assembler directive - an instruction
+            for the assembler to follow when it is converting the code to machine code. <code>.segment</code>,
+            as we discussed in Chapter 4, tells the assembler where to put your code in the final output. The
+            <code>HEADER</code> segment, unsurprisingly, is placed at the very beginning of the resulting .nes
+            file.
+          </p>
+
+          <p>
+            The second line uses another assembler directive that we've seen before. <code>.byte</code> tells the
+            assembler to insert literal data bytes into the output, rather than trying to interpret opcodes
+            from them. The string "NES" is inserted as three ASCII codepoints: <code>$4e</code>, <code>$45</code>, <code>$53</code>
+            (the ASCII representations of "N", "E", and "S"). The next byte, <code>26</code>, represents the MS-DOS
+            "end of file" character (often seen in hex notation as <code>$1a</code>). These four bytes
+            are a "magic number" that marks the output as an NES game.
+            <label for="magic-numbers" class="margin-toggle">&#8853;</label>
+            <input type="checkbox" id="magic-numbers" class="margin-toggle">
+            <span class="marginnote">
+              Most file types have a "magic number" at the start of the file to make it easier for an operating
+              system to know what a file is with certainty. Java bytecode files begin with <code>$cafebabe</code>,
+              PDF files begin with <code>$25504446</code> ("%PDF"), and zip files begin with <code>$504b</code> ("PK",
+              since the format used to be called "PKZIP"). You can find a larger list of file type magic numbers
+              on <a href="https://en.wikipedia.org/wiki/Magic_number_%28programming%29#Format_indicator">Wikipedia</a>.
+            </span>
+          </p>
+
+          <p>
+            The "NES" magic number header specifically identifies the file as an "iNES" NES game.
+            <a href="http://fms.komkon.org/iNES/">iNES</a> was one of the first NES emulators, and the first to
+            achieve widespread popularity. iNES' author, Marat Fayzullin, created a special header format that
+            provides the emulator with information about the game itself, such as which region (NTSC/PAL) the
+            game is from, how many PRG and CHR ROM banks it has, and more. The full iNES header is 16 bytes long.
+          </p>
+
+          <p>
+            Our test project's header, after "NES" and <code>$1a</code>, specifies that the "cartridge" for our
+            game contains two 16KB PRG-ROM banks (32KB storage) and one 8KB CHR-ROM bank, and that it uses
+            "mapper zero". NES cartridges come in many (hundreds) of variations, and the iNES header assigns
+            each variant a number. Mapper zero, as you might guess, represents the simplest kind of NES cartridge,
+            generally called "NROM". Some of the earliest NES games used NROM cartridges, including <i>Balloon Fight</i>,
+            <i>Donkey Kong</i>, and <i>Super Mario Bros.</i>. Due to their relative simplicity, we'll be creating
+            NROM cartridge games for most of this book.
+            <label for="ines-header-details" class="margin-toggle">&#8853;</label>
+            <input type="checkbox" id="ines-header-details" class="margin-toggle">
+            <span class="marginnote">
+              For more details on the iNES header format, see the article on the
+              <a href="http://wiki.nesdev.com/w/index.php/INES">NESDev Wiki</a>. Many of the things that can be
+              set through the iNES header, like mirroring modes and PRG-RAM, will be discussed in greater detail
+              later in this book.
+            </span>
+          </p>
+
+          <h2>Isolating Procedures with <code>.proc</code></h2>
+
+          <p>
+            After the header, another <code>.segment</code> directive switches us to the "CODE" segment,
+            which begins at 16 bytes into the file (i.e., after the 16-byte header). The first thing
+            within the segment is a new assembler directive, <code>.proc</code>. This directive lets you
+            create new lexical scopes in your code. Basically, this means that the labels you make
+            inside of a <code>.proc</code> are unique to that proc. Here's an example:
+          </p>
+
+          <pre class="code line-numbers"><code class="lang-asm6502">.proc foo
+  LDA $2002
+some_label:
+  LDA #$3f
+.endproc
+
+.proc bar
+  LDA #$29
+some_label:
+  STA $2007
+.endproc</code></pre>
+
+          <p>
+            Here, we use the label <code>some_label</code> twice, once in <code>.proc foo</code> and once
+            in <code>.proc bar</code>. However, since they are inside of different procs, the two labels
+            are treated as totally separate. Using <code>some_label</code> inside of <code>bar</code> will
+            refer to <code>bar</code>'s version, and there is no way to access <code>foo</code>'s version
+            of the label from inside of <code>bar</code>. Generally, we will wrap independent pieces of
+            code in their own procs so they can use the same label names without clobbering each other.
+            <label for="why-use-procs" class="margin-toggle">&#8853;</label>
+            <input type="checkbox" id="why-use-procs" class="margin-toggle">
+            <span class="marginnote">
+              This might seem like a lot of effort just to be able to use the same label name in more than
+              one place, which is true to an extent. The real power of using <code>.proc</code> comes
+              when your code is composed of multiple files - some of which you might not have written
+              yourself! Procs let you safely use a label without having to check through all of the
+              code to see if you (or another developer) have used the same label before.
+            </span>
+          </p>
+
+          <p>
+            The test project uses four procs - <code>irq_handler</code>, <code>nmi_handler</code>,
+            <code>reset_handler</code>, and <code>main</code>. We covered the <code>main</code> proc
+            in the last chapter, but what are the other procs doing?
+          </p>
+
+          <h2>Interrupt Vectors</h2>
+
+          <p>
+            As discussed earlier, the processor in the NES repeatedly fetches and executes bytes
+            in sequence. When certain events happen, though, we want to interrupt the processor
+            and tell it to do something else. The events that can cause these interruptions are
+            called <em>interrupt vectors</em>, and the NES/6502 has three of them:
+          </p>
+
+          <ul>
+            <li>The <i>reset vector</i> occurs when the system is first turned on, or when the user
+              presses the Reset button on the front of the console.</li>
+            <li>The <i>NMI vector</i> ("Non-Maskable Interrupt") occurs when the PPU starts preparing
+              the next frame of graphics, 60 times per second.</li>
+            <li>The <i>IRQ vector</i> ("Interrupt Request") can be triggered by the NES' sound processor
+              or from certain types of cartridge hardware.</li>
+          </ul>
+
+          <p>
+            When an interrupt is triggered, the processor stops whatever it is doing and executes
+            the code specified as the "handler" for that interrupt. A handler is just a collection
+            of assembly code that ends with a new opcode: <code>RTI</code>, for "Return from Interrupt".
+            Since the test project doesn't need to make use of NMI or IRQ handlers, they consist of
+            just <code>RTI</code>:
+          </p>
+
+          <pre class="code line-numbers" data-start="5"><code class="lang-asm6502">.proc irq_handler
+  RTI
+.endproc
+
+.proc nmi_handler
+  RTI
+.endproc</code></pre>
+
+          <p>
+            <code>RTI</code> marks the end of an interrupt handler, but how does the processor
+            know where the handler for a given interrupt begins? The processor looks to the last
+            six bytes of memory - addresses <code>$fffa</code> to <code>$ffff</code> - to find
+            the memory address of where each handler begins.
+          </p>
+
+          <div class="table-wrapper">
+            <table>
+              <caption>Interrupt handler lookups</caption>
+              <thead>
+                <tr>
+                  <th>Memory address</th>
+                  <th>Use</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>$fffa-$fffb</code></td>
+                  <td>Start of NMI handler</td>
+                </tr>
+                <tr>
+                  <td><code>$fffc-$fffd</code></td>
+                  <td>Start of reset handler</td>
+                </tr>
+                <tr>
+                  <td><code>$fffe-$ffff</code></td>
+                  <td>Start of IRQ handler</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            Because these six bytes of memory are so important, ca65 has a specific segment type
+            for them: <code>.segment "VECTORS"</code>. The most common way to use this segment
+            is to give it a list of three labels, which ca65 will convert to addresses when
+            assembling your code. Here is what our test project's "VECTORS" segment looks like:
+          </p>
+
+          <pre class="code line-numbers" data-start="39"><code class="lang-asm6502">.segment "VECTORS"
+.addr nmi_handler, reset_handler, irq_handler</code></pre>
+
+          <p>
+            <code>.addr</code> is a new assembler directive. Given a label, it outputs the memory
+            address that corresponds to that label. So, these two lines of assembly set bytes
+            <code>$fffa</code> to <code>$ffff</code> of memory to the addresses of the NMI handler,
+            reset handler, and IRQ handler - exactly the same order as in the table above. Each
+            label on line 40 is the start of the <code>.proc</code> for that handler.
+            <label for="turning-it-on" class="margin-toggle">&#8853;</label>
+            <input id="turning-it-on" class="margin-toggle">
+            <span class="marginnote">
+              When the NES first turns on, rather than starting from memory address <code>$0000</code>,
+              the 2A03 follows a specific series of steps. It fetches the memory address stored in
+              <code>$fffc</code> and <code>$fffd</code> (the address of the start of the reset handler).
+              It places that address into the program counter, which makes the start of the reset
+              handler the next instruction to be executed. Then it works its way through the reset
+              handler, instruction by instruction.
+            </span>
+          </p>
+
+          <h3>The Reset Handler</h3>
+
+          <p>
+            While the test project doesn't make use of the NMI or IRQ events, it does need a reset
+            handler. The reset handler's job is to set up the system when it is first turned on,
+            and to put it back to that just-turned-on state when the user hits the reset button.
+            Here is the test project's reset handler:
+          </p>
+
+          <pre class="code line-numbers" data-start="13"><code class="lang-asm6502">.proc reset_handler
+  SEI
+  CLD
+  LDX #$00
+  STX $2000
+  STX $2001
+vblankwait:
+  BIT $2002
+  BPL vblankwait
+  JMP main
+.endproc</code></pre>
+
+          <p>
+            A few things to note about this section of code. First, unlike the other interrupt handlers, it
+            does not end in <code>RTI</code> - that's because when the system is first turned on,
+            the processor wasn't in the middle of doing anything else, so there is nowhere to "return"
+            to. Instead, it ends with <code>JMP main</code>. We saw <code>JMP</code> at the end of <code>main</code>
+            last chapter, where <code>JMP forever</code> created our infinite loop. <code>JMP</code>
+            stands for "jump", and it tells the processor to go somewhere else to fetch its next instruction.
+            The operand for <code>JMP</code> is a full, two-byte memory address, but it is nearly always
+            used with a label that the assembler will convert to a memory address at assemble time.
+            <code>JMP main</code>, here, tells the processor to start
+            executing the code in <code>main</code> once it is done with the reset handler.
+          </p>
+
+          <p>
+            Second, this code features several opcodes we haven't seen before. Let's learn about them by
+            analyzing the reset handler line-by-line.
+          </p>
+
+          <p>
+            Lines 14 and 15 feature two opcodes that are, generally, only found in reset handlers.
+            <code>SEI</code> is "Set Interrupt ignore bit". After an <code>SEI</code>, anything
+            that would trigger an IRQ event does nothing instead. Our reset handler calls <code>SEI</code>
+            before doing anything else because we don't want our code to jump to the IRQ handler
+            before it has finished initializing the system. <code>CLD</code> stands for "Clear Decimal mode bit",
+            disabling "binary-coded decimal" mode on the 6502.
+            <label for="bcd-mode" class="margin-toggle">&#8853;</label>
+            <input type="checkbox" id="bcd-mode" class="margin-toggle">
+            <span class="marginnote">
+              Due to convoluted licensing issues surrounding the 6502 and Ricoh's legal ability
+              to manufacture it, the 2A03 used in the NES has binary-coded decimal mode circuitry
+              within it, but all electrical traces that would connect those circuits to the rest
+              of the chip have been cut. <code>CLD</code> (and its counterpart, <code>SED</code>)
+              do nothing on the NES as a result, but calling <code>CLD</code> as part of a reset
+              handler just-in-case is considered best practice.
+            </span>
+          </p>
+
+          <p>
+            The next three lines go back to familiar loads and stores. We've seen <code>$2001</code> before -
+            it's PPUMASK - but <code>$2000</code> is new. This address is commonly referred to as PPUCTRL, and
+            it changes the operation of the PPU in ways more complicated than PPUMASK's ability to
+            turn rendering on or off. We won't cover PPUCTRL in detail until later in this book, when
+            we've seen more of how the NES PPU draws graphics. Like PPUMASK, it is a set of bit fields.
+            For the purpose of initializing the NES, the main thing to point out is that bit 7 controls
+            whether or not the PPU will trigger an NMI every frame. By storing <code>$00</code> to both
+            PPUCTRL and PPUMASK, we turn off NMIs and disable rendering to the screen during startup, to
+            ensure that we don't draw random garbage to the screen.
+          </p>
+
+          <p>
+            The remainder of the reset handler is a loop that waits for the PPU to fully boot up before
+            moving on to our main code. The PPU takes about 30,000 CPU cycles to become stable from
+            first powering on, so this code repeatedly fetches the PPU's status from PPUSTATUS (<code>$2002</code>)
+            until it reports that it is ready. 30,000 cycles sounds like a long time, but the NES' 2A03 processor
+            runs at 1.78 MHz, so 30,000 cycles is a tiny, tiny fraction of a second. I'm not going to cover
+            <code>BIT</code> or <code>BPL</code> here, but rest assured that we will come back to them later.
+          </p>
+
+          <p>
+            Finally, with all of our setup complete, we jump to <code>.proc main</code> and execute
+            our game's actual code.
+          </p>
+
+          <h3>A Full Reset</h3>
+
+          <p>
+            The reset handler our test project uses is the most basic handler that will reliably start up
+            the NES in a known-good state. There are many other tasks that the reset handler can take
+            care of, like setting up the Audio Processing Unit (APU) and clearing out RAM.
+            As we add more functionality to our games, we will expand the role of the reset handler as well.
+          </p>
+
+          <p>
+            We have now covered all of the code from the test project - congratulations! After the last few
+            chapters, you might be thinking to yourself "this is incredibly complicated, why bother?"
+            The next chapter is for you!
+          </p>
+
+        </section>
+
+        <p class="chapter-links">
+          <a href="/chapters/05-6502assembly.html">&laquo; 5. Introducing 6502 Assembly</a>
+          <a href="/chapters/07-whydothis.html">7. Why Would Anyone Do This? &raquo;</a>
+        </p>
+      </article>
+    </div>
+    <footer class="footer-wrapper">
+      <div class="footer-container">
+        <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">
+          <img class="license-logo" alt="Creative Commons License" src="https://licensebuttons.net/l/by-nc-sa/4.0/88x31.png">
+        </a>
+        <p class="license-text">This work by Kevin Zurawel is licensed under a<br>
+          <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a>.
+        </p>
+      </div>
+    </footer>
+    <script src="/js/prism.js"></script>
+    <script src="/js/jsnes.min.js"></script>
+    <!-- <script src="/js/jsnes_helpers.js"></script> -->
+    <!-- <script> -->
+    <!--   const canvas = new Canvas(document.getElementById('helloworld&#45;canvas')); -->
+    <!--   const nes = new jsnes.NES({ -->
+    <!--     onFrame: (frameBuffer) => { -->
+    <!--       canvas.convertNESBuffer(frameBuffer); -->
+    <!--       canvas.writeBuffer(); -->
+    <!--     }, -->
+    <!--     onAudioSample: (left, right) => { -->
+    <!--       return; -->
+    <!--     } -->
+    <!--   }); -->
+    <!--  -->
+    <!--   fetchAndRunROM('/roms/helloworld.nes', nes, createFrameHandler); -->
+    <!-- </script> -->
+  </body>
+</html>

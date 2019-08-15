@@ -1,0 +1,537 @@
+@charset "UTF-8";
+
+body > header, body > footer {
+  box-sizing: border-box;
+}
+
+/* Tufte CSS */
+@font-face {
+  font-family: "et-book";
+  src: url("et-book-roman-old-style-figures/et-book-roman-old-style-figures.woff") format("woff");
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "et-book";
+  src: url("et-book-display-italic-old-style-figures/et-book-display-italic-old-style-figures.woff") format("woff");
+  font-weight: normal;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: "et-book";
+  src: url("et-book-semi-bold-old-style-figures/et-book-semi-bold-old-style-figures.woff") format("woff");
+  font-weight: bold;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "IBM 3270";
+  src: url("3270Medium.woff") format("woff");
+  font-weight: normal;
+  font-style: normal;
+}
+
+html {
+  font-size: 15px;
+}
+
+body {
+  background-color: #fff3dc;
+  color: #111;
+  margin: 0 auto;
+  font-family: et-book, Palatino, "Palatino Linotype", "Palatino LT STD", "Book Antiqua", Georgia, serif;
+}
+
+h1 {
+  font-weight: 400;
+  margin-top: 2rem;
+  margin-bottom: 1.5rem;
+  font-size: 3.2rem;
+  line-height: 1;
+}
+
+h2 {
+  font-style: italic;
+  font-weight: 400;
+  margin-top: 2.1rem;
+  margin-bottom: 1.4rem;
+  font-size: 2.2rem;
+  line-height: 1;
+}
+
+h3 {
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1.7rem;
+  margin-top: 2rem;
+  margin-bottom: 1.4rem;
+  line-height: 1;
+}
+
+hr {
+  display: block;
+  height: 1px;
+  width: 55%;
+  margin: 1em 0;
+  border: 0;
+  border-top: 1px solid #ccc;
+  padding: 0;
+}
+
+p.subtitle {
+  font-style: italic;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  font-size: 1.8rem;
+  display: block;
+  line-height: 1;
+}
+
+.danger {
+  color: red;
+}
+
+.wrapper {
+  width: 87.5%;
+  padding-left: 12.5%;
+  max-width: 1400px;
+  counter-reset: sidenote-counter;
+}
+
+article {
+  min-height: calc(100vh - 23.1rem);
+  position: relative;
+  padding: 5rem 0;
+}
+
+section {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+p, ol, ul {
+  font-size: 1.4rem;
+  line-height: 2rem;
+}
+
+p {
+  margin-top: 1.4rem;
+  margin-bottom: 1.4rem;
+  padding-right: 0;
+  vertical-align: baseline;
+}
+
+blockquote {
+  font-size: 1.4rem;
+}
+
+blockquote p {
+  width: 55%;
+  margin-right: 40px;
+}
+
+blockquote footer {
+  width: 55%;
+  font-size: 1.1rem;
+  text-align: right;
+}
+
+section > p, section > footer, section > table {
+  width: 55%;
+}
+
+section > ol, section > ul {
+  width: 50%;
+  -webkit-padding-start: 5%;
+}
+
+li:not(:first-child) {
+  margin-top: 0.25rem;
+}
+
+figure {
+  padding: 0;
+  border: 0;
+  font-size: 100%;
+  font: inherit;
+  vertical-align: baseline;
+  max-width: 55%;
+  -webkit-margin-start: 0;
+  -webkit-margin-end: 0;
+  margin: 2em 0 4em 0;
+  overflow: hidden;
+}
+
+figcaption {
+  float: right;
+  clear: right;
+  margin-top: 0;
+  margin-bottom: 0;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  vertical-align: baseline;
+  position: relative;
+  max-width: 60%;
+}
+
+figure.fullwidth figcaption {
+  margin-right: 24%;
+}
+
+a:link, a:visited {
+  color: #82642b;
+}
+
+a:link {
+  text-decoration: none;
+  background: linear-gradient(#fff3dc, #fff3dc), linear-gradient(#fff3dc, #fff3dc), linear-gradient(#333, #333);
+  background-size: 0.05em 1px, 0.05em 1px, 1px 1px;
+  background-repeat: no-repeat, no-repeat, repeat-x;
+  text-shadow: 0.03em 0 #fff3dc, -0.03em 0 #fff3dc, 0 0.03em #fff3dc, 0 -0.03em #fff3dc, 0.06em 0 #fff3dc, -0.06em 0 #fff3dc, 0.09em 0 #fff3dc, -0.09em 0 #fff3dc, 0.12em 0 #fff3dc, -0.12em 0 #fff3dc, 0.15em 0 #fff3dc, -0.15em 0 #fff3dc;
+  background-position: 0% 93%, 100% 93%, 0% 93%;
+}
+
+a:link::selection {
+  text-shadow: 0.03em 0 #b4d5fe, -0.03em 0 #b4d5fe, 0 0.03em #b4d5fe, 0 -0.03em #b4d5fe, 0.06em 0 #b4d5fe, -0.06em 0 #b4d5fe, 0.09em 0 #b4d5fe, -0.09em 0 #b4d5fe, 0.12em 0 #b4d5fe, -0.12em 0 #b4d5fe, 0.15em 0 #b4d5fe, -0.15em 0 #b4d5fe;
+  background: #b4d5fe;
+}
+
+a:link::-moz-selection {
+  text-shadow: 0.03em 0 #b4d5fe, -0.03em 0 #b4d5fe, 0 0.03em #b4d5fe, 0 -0.03em #b4d5fe, 0.06em 0 #b4d5fe, -0.06em 0 #b4d5fe, 0.09em 0 #b4d5fe, -0.09em 0 #b4d5fe, 0.12em 0 #b4d5fe, -0.12em 0 #b4d5fe, 0.15em 0 #b4d5fe, -0.15em 0 #b4d5fe;
+  background: #b4d5fe;
+}
+
+body > header a:link,
+body > footer a:link {
+  background: linear-gradient(#88030f, #88030f), linear-gradient(#88030f, #88030f), linear-gradient(#bb8f3e, #bb8f3e);
+  background-size: 0.05em 1px, 0.05em 1px, 1px 1px;
+  background-repeat: no-repeat, no-repeat, repeat-x;
+  text-shadow: 0.03em 0 #88030f, -0.03em 0 #88030f, 0 0.03em #88030f, 0 -0.03em #88030f, 0.06em 0 #88030f, -0.06em 0 #88030f, 0.09em 0 #88030f, -0.09em 0 #88030f, 0.12em 0 #88030f, -0.12em 0 #88030f, 0.15em 0 #88030f, -0.15em 0 #88030f;
+  background-position: 0% 93%, 100% 93%, 0% 93%;
+}
+
+body > header a:link,
+body > header a:visited,
+body > footer a:link,
+body > footer a:visited {
+  color: #bb8f3e;
+}
+
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+  a:link {
+    background-position-y: 87%, 87%, 87%;
+  }
+}
+
+img {
+  max-width: 100%;
+}
+
+.nes-example {
+  display: block;
+  max-width: 512px;
+  width: 55%;
+}
+
+.sidenote, .marginnote {
+  float: right;
+  clear: right;
+  margin-right: -60%;
+  width: 50%;
+  margin-top: 0;
+  margin-bottom: 0;
+  font-size: 1.1rem;
+  line-height: 1.3;
+  vertical-align: baseline;
+  position: relative;
+}
+
+.sidenote-number {
+  counter-increment: sidenote-counter;
+}
+
+.sidenote-number:after, .sidenote:before {
+  position: relative;
+  vertical-align: baseline;
+}
+
+.sidenote-number:after {
+  content: counter(sidenote-counter);
+  font-size: 1rem;
+  top: -0.5rem;
+  left: 0.1rem;
+}
+
+.sidenote:before {
+  content: counter(sidenote-counter) " ";
+  top: -0.5rem;
+}
+
+blockquote .sidenote,
+blockquote .marginnote {
+  margin-right: -82%;
+  min-width: 59%;
+  text-align: left;
+}
+
+div.fullwidth, table.fullwidth {
+  width: 100%;
+}
+
+div.table-wrapper {
+  overflow-x: auto;
+  font-family: "Trebuchet MS", "Gill Sans", "Gill Sans MT", sans-serif;
+}
+
+code {
+  font-family: "IBM 3270", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+  font-size: 1.25rem;
+  line-height: 1.42;
+}
+
+h1 > code, h2 > code, h3 > code {
+  font-size: 0.80em;
+  font-style: normal;
+}
+
+.marginnote > code, .sidenote > code {
+  font-size: 1rem;
+}
+
+pre.code {
+  font-size: 1.2rem;
+	line-height: 1.4;
+  width: 48.5%;
+  margin-left: 2.5%;
+  overflow-x: auto;
+}
+
+.code-toolbar > pre.code + .toolbar {
+  width: 51%;
+  left: 0;
+  margin-left: 2.5%;
+  right: auto;
+  text-align: right;
+}
+
+pre.code.fullwidth {
+  width: 90%;
+}
+
+pre.code code {
+	font-size: 1.2rem;
+  line-height: 1.4;
+}
+
+.fullwidth {
+  max-width: 90%;
+  clear: both;
+}
+
+input.margin-toggle {
+  display: none;
+}
+
+label.sidenote-number {
+  display: inline;
+}
+
+label.margin-toggle:not(.sidenote-number) {
+  display: none;
+}
+
+.iframe-wrapper {
+  position: relative;
+  padding-bottom: 38.25%;
+  padding-top: 25px;
+  height: 0;
+}
+
+.iframe-wrapper iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+@media screen and (max-width: 760px) {
+  article {
+    width: 84%;
+    padding-left: 8%;
+    padding-right: 8%;
+  }
+
+  hr, section > p, section > footer, section > table {
+    width: 100%;
+  }
+
+  pre.code, .code-toolbar > pre.code + .toolbar {
+    width: 96%;
+  }
+
+  pre.code {
+    left: -22%;
+  }
+
+  section > ol, section > ul {
+    width: 90%;
+  }
+
+  figure {
+    max-width: 90%;
+  }
+
+  figcaption, figure.fullwidth figcaption {
+    margin-right: 0;
+    max-width: none;
+  }
+
+  blockquote {
+    margin-left: 1.5em;
+    margin-right: 0;
+  }
+
+  blockquote p, blockquote footer {
+    width: 100%;
+  }
+
+  label.margin-toggle:not(.sidenote-number) {
+    display: inline;
+  }
+
+  .sidenote, .marginnote {
+    display: none;
+  }
+
+  .margin-toggle:checked + .sidenote,
+  .margin-toggle:checked + .marginnote {
+    display: block;
+    float: left;
+    left: 1rem;
+    clear: both;
+    width: 95%;
+    margin: 1rem 2.5%;
+    vertical-align: baseline;
+    position: relative;
+  }
+
+  label {
+    cursor: pointer;
+  }
+
+  div.table-wrapper, table {
+    width: 85%;
+  }
+
+  img {
+    width: 100%;
+  }
+
+  .nes-example {
+    margin: 0 auto;
+    width: 100%;
+  }
+}
+
+/* Generic styles */
+
+/* Layout styles */
+
+.header-wrapper {
+  background-color: #88030f;
+	display: flex;
+  margin-bottom: 1.45rem;
+  min-height: 3rem;
+  padding: 1.45rem 1.0875rem;
+}
+
+.header-wrapper ul {
+	display: flex;
+	list-style-type: none;
+}
+
+.header-wrapper ul li {
+	margin-right: 1em;
+}
+
+.header-wrapper ul li:not(:first-child) {
+	margin-top: 0;
+}
+
+.site-title {
+  display: inline-block;
+  margin: 0;
+}
+
+body > header .site-title a {
+  background: none;
+}
+
+.footer-wrapper {
+  background-color: #88030f;
+  min-height: 4rem;
+}
+
+.footer-container {
+  align-items: center;
+  color: #bb8f3e;
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: center;
+  margin: 0 auto;
+  max-width: 960px;
+  overflow: hidden;
+  padding: 1.45rem 1.0875rem;
+}
+
+.footer-container > a[rel="license"] {
+  margin-right: 2rem;
+  text-decoration: none;
+  background: none;
+}
+
+.license-logo {
+  margin-bottom: 0;
+}
+
+.license-text {
+  font-size: 1.1rem;
+  line-height: 1.2;
+  margin-bottom: 0;
+  margin-top: 0;
+  max-width: 80%;
+}
+
+.table-of-contents {
+  list-style-type: none;
+}
+
+.table-of-contents li:before {
+  content: "- ";
+}
+
+.chapter-links {
+  display: flex;
+  justify-content: space-between;
+  width: 55%;
+}
+
+table {
+  border-collapse: collapse;
+}
+
+table caption {
+  font-style: italic;
+}
+
+table thead {
+  border-bottom: 1px solid #111;
+}
+
+table th, table td {
+  padding: 0.45em 0.75em;
+}
+

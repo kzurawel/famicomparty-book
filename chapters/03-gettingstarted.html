@@ -1,0 +1,334 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Famicom Party | Getting Started</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/prism.css">
+		<!-- Matomo -->
+		<script type="text/javascript">
+			var _paq = _paq || [];
+			/* tracker methods like "setCustomDimension" should be called before "trackPageView" */
+			_paq.push(['trackPageView']);
+			_paq.push(['enableLinkTracking']);
+			(function() {
+				var u="//analytics.famicom.party/";
+				_paq.push(['setTrackerUrl', u+'piwik.php']);
+				_paq.push(['setSiteId', '1']);
+				var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+				g.type='text/javascript'; g.async=true; g.defer=true; g.src=u+'piwik.js'; s.parentNode.insertBefore(g,s);
+			})();
+		</script>
+		<!-- End Matomo Code -->
+  </head>
+  <body>
+    <header class="header-wrapper">
+      <h1 class="site-title"><a href="/"><img src="/img/famicomparty.png" alt="famicom party"></a></h1>
+			<nav class="header-links">
+        <ul>
+          <li><a href="https://famicom.party">Home</a></li>
+          <li><a href="https://book.famicom.party">The Book</a></li>
+          <li><a href="https://blog.famicom.party">The Blog</a></li>
+        </ul>
+			</nav>
+    </header>
+    <div class="wrapper">
+      <article>
+        <h1>3. Getting Started</h1>
+
+        <section>
+          <p>
+            Let's get started actually programming for the NES! In this chapter, we're going to
+            set up a development environment, installing all of the tools that you will need
+            to work through this book, and then we will build and run the most basic game
+            possible just to make sure everything is working.
+          </p>
+
+          <h2>Setting Up Your Development Environment</h2>
+
+          <p>
+            Here are all of the tools that we will be installing. Some of these will be used
+            right away (and all the time), while others are more specialized and won't come
+            into play until much later. For each category, I'm including the specific
+            software I will be using in this book; there are many other choices, so feel
+            free to experiment with other tools once you get comfortable with my recommendations.
+          </p>
+          <ul>
+            <li>A text editor (your choice)</li>
+            <li>An assembler/linker (ca65 and ld65)</li>
+            <li>An emulator (Nintaco)</li>
+            <li>A graphics tool that can read/save NES formatted images (NES Screen Tool)</li>
+            <li>A music composition tool (FamiTracker)</li>
+          </ul>
+
+          <h2>Text Editor</h2>
+          <p>
+            First, you will need a <em>text editor</em>. I assume that you have previous
+            programming experience and that, as a result, you already have a favorite text
+            editor. If not, here are a few programs that you may want to try.
+          </p>
+          <ul>
+            <li><a href="https://www.sublimetext.com/">Sublime Text</a>. Cross-platform, popular
+              with web developers, easy to get started with and powerful tools once you
+              get familiar with the basics.</li>
+            <li><a href="https://atom.io/">Atom</a>. Basically GitHub's answer to Sublime Text.
+              Cross-platform, highly configurable.</li>
+            <li><a href="https://code.visualstudio.com/">Visual Studio Code</a>. Microsoft's robust
+              text editor platform. Tailored for web development but extensible for any kind
+              of programming. Also cross-platform, not limited to Windows.</li>
+            <li>Vim, emacs, nano, etc. Command-line text editors of yore. (I personally use Vim, but
+              your mileage may vary.)</li>
+          </ul>
+
+          <h2>Assembler and Linker</h2>
+          <p>
+            An <em>assembler</em> compiles your assembly code (what we will be writing in this book)
+            into machine code, the raw stream of bytes that the processor reads. A <em>linker</em>
+            takes a group of files that have been run through the assembler and turns them into a
+            single program file. Since each processor has its own machine code, assemblers usually
+            target only one type of processor. There are many assemblers and linkers to choose from
+            for the 6502, but for this book we will be using ca65 and ld65. They are open-source and
+            cross-platform, and have some very useful features for developing larger programs. ca65 and
+            ld65 are part of the larger "cc65" suite of programs, which include a C compiler and more.
+          </p>
+          <h3>Mac</h3>
+          <p>
+            To install ca65 and ld65 on a Mac, first install <a href="https://brew.sh">Homebrew</a>, a
+            Mac package manager. Copy and paste the command from the homepage into a terminal and press
+            enter; follow the instructions and Homebrew will be ready to use. Once you have Homebrew,
+            just type <code>brew install cc65</code> and press enter.
+          </p>
+          <h3>Windows</h3>
+          <p>
+            On Windows, you'll need to download ca65 and ld65 to a specific directory on your computer.
+            Download the latest "Windows Snapshot" from the <a href="https://github.com/cc65/cc65">main
+            cc65 project page</a>. Unzip the contents to <code>C:\cc65</code>. You'll also need to update
+            your system path to make ca65 and ld65 available from any directory. The process for doing
+            this varies depending on which version of Windows you are using. On most newer versions of
+            Windows, you can right-click "My Computer", select "Properties", then "Advanced System Settings"
+            and finally "Environment Variables". You'll want to find the entry for <code>%PATH%</code> and
+            add <code>C:\cc65\bin</code> to the end of it.
+          </p>
+          <h3>Linux</h3>
+          <p>
+            You will need to build cc65 from source. Thankfully, this is a fairly simple process. First,
+            make sure you have git and a basic build environment - on Ubuntu, for example, <code>sudo apt-get
+              install git build-essential</code> should do it. Then, navigate to the directory where you want
+            to install cc65, clone the cc65 repository, and build it:
+          </p>
+          <pre class="code">git clone https://github.com/cc65/cc65.git
+cd cc65
+make</pre>
+          <p>Finally, make the cc65 programs available from any directory with <code>sudo make avail</code>. This will
+            add symlinks from your cc65 folder to <code>/usr/local/bin</code>.
+          </p>
+
+          <h2>Emulator</h2>
+          <p>
+            <label for="nintaco" class="margin-toggle">&#8853;</label>
+            <input id="nintaco" type="checkbox" class="margin-toggle">
+            <span class="marginnote">
+              <img src="/img/nintaco.png"><br>
+              Nintaco.
+            </span>
+            An <em>emulator</em> is a program that runs programs intended for a different computer system.
+            We will use an NES emulator to run the programs that we create on the same computer used to
+            develop them, instead of requiring a hardware NES. There are a number of NES emulators available
+            (and, once you have a solid grasp of NES development, it's fun to try to make your own!), but
+            for this book we will be using <a href="http://nintaco.com/">Nintaco</a>.
+            It is cross-platform and one of the few emulators to feature debugging tools, which will be
+            useful as we write programs.
+          </p>
+          <p>
+            Installing Nintaco is the same for all platforms - download it from the Nintaco website and unzip.
+            To run Nintaco, double-click Nintaco.jar. Nintaco requires Java to run; if you do not have Java
+            installed on your computer, download a "Java Runtime Environment" from <a href="https://java.com">java.com</a>.
+          </p>
+
+          <h2>Graphics Tools</h2>
+          <p>
+            The NES stores graphics in a very different format from common image types like JPEG or PNG. We
+            will need a program that can work with NES images. There are plugins for large graphics
+            packages like Photoshop or GIMP, but I like using a smaller, purpose-built tool for this.
+            For this book, we will be using Shiru's <a href="https://shiru.untergrund.net/software.shtml">NES Screen Tool</a>.
+            <label for="nes-screen-tool" class="margin-toggle">&#8853;</label>
+            <input id="nes-screen-tool" type="checkbox" class="margin-toggle">
+            <span class="marginnote">
+              <img src="/img/nesst.png"><br>
+              NES Screen Tool.
+            </span>
+          </p>
+          <h3>Windows</h3>
+          <p>
+            Just download NES Screen Tool from the link above, and double-click "nesst.exe" to run it.
+          </p>
+          <h3>Mac</h3>
+          <p>
+            NES Screen Tool is a Windows program, but thankfully it runs well on Mac with a Windows
+            compatibility layer. Download my <a href="https://bit.ly/nesscreentoolmac">Mac wrapper</a>,
+            unzip it and place it in your Applications folder. Alternatively, you can use Homebrew to install
+            WINE (<code>brew install wine</code>), then launch it from the command line. E.g.
+            <code>wine ~/Downloads/NESst/nesst.exe</code>.
+          </p>
+          <h3>Linux</h3>
+          <p>
+            Use your distribution's package manager to install WINE (e.g. <code>apt-get install wine</code>),
+            then launch NES Screen Tool from the command line as above under "Mac". On some distributions,
+            installing WINE automatically associates it with .exe files; you may be able to just
+            double-click nesst.exe.
+          </p>
+
+          <h2>Music Composition Tools</h2>
+          <p>
+            As with graphics, NES audio is a set of instructions to an audio processor rather than something
+            like an MP3. The most popular program for creating NES audio is <a href="http://www.famitracker.com/">FamiTracker</a>,
+            which we will use later in this book.
+            <label for="famitracker" class="margin-toggle">&#8853;</label>
+            <input id="famitracker" type="checkbox" class="margin-toggle">
+            <span class="marginnote">
+              <img src="/img/famitracker.jpg"><br>
+              FamiTracker.
+            </span>
+          </p>
+          <h3>Windows</h3>
+          <p>
+            Download FamiTracker 0.4.6 from the link above and unzip it. Double-click "FamiTracker.exe" to open it.
+          </p>
+          <h3>Mac</h3>
+          <p>
+            As with NES Screen Tool, I have made a <a href="https://bit.ly/famitrackermac">Mac wrapper</a> for
+            FamiTracker, or you can run it using WINE directly.
+          </p>
+          <h3>Linux</h3>
+          <p>
+            Use WINE to launch FamiTracker, as with NES Screen Tool above.
+          </p>
+
+          <hr>
+
+          <h2>Putting It All Together</h2>
+          <p>
+            Now that you have all of the tools installed, it's time to make sure that they work. We are going to
+            create the "Hello World" of NES games: filling the entire screen with one color.
+          </p>
+          <p>
+            <label for="explain-text-examples" class="margin-toggle">&#8853;</label>
+            <input id="explain-text-examples" type="checkbox" class="margin-toggle">
+            <span class="marginnote">
+              Any code listing, such as the one here, has a "Copy" link in the top-right corner
+              if you hover over it. This will copy the entire code listing to your clipboard,
+              ready to paste into a text editor.
+            </span>
+            Open your text editor and create a new file, <code>helloworld.asm</code>. Copy and paste the following
+            code into the file:
+          </p>
+          <pre class="code line-numbers"><code class="lang-asm6502">.segment "HEADER"
+.byte "NES", 26, 2, 1, 0, 0
+
+.segment "CODE"
+.proc irq_handler
+  RTI
+.endproc
+
+.proc nmi_handler
+  RTI
+.endproc
+
+.proc reset_handler
+  SEI
+  CLD
+  LDX #$00
+  STX $2000
+  STX $2001
+vblankwait:
+  BIT $2002
+  BPL vblankwait
+  JMP main
+.endproc
+
+.proc main
+  LDX $2002
+  LDX #$3f
+  STX $2006
+  LDX #$00
+  STX $2006
+  LDA #$29
+  STA $2007
+  LDA #%00011110
+  STA $2001
+forever:
+  JMP forever
+.endproc
+
+.segment "VECTORS"
+.addr nmi_handler, reset_handler, irq_handler
+
+.segment "CHARS"
+.res 8192
+.segment "STARTUP"</code></pre>
+
+          <p>
+            Next, we need to use our assembler. In the directory where you saved helloworld.asm,
+            run <code>ca65 helloworld.asm</code>. The result should be a new file, helloworld.o.
+            This is an <em>object file</em> - machine code. But it is not in a format that is
+            ready to plug into an emulator just yet. To do that, we need to run the linker.
+            In the same directory, run <code>ld65 helloworld.o -t nes -o helloworld.nes</code>.
+            This should result in a new file, helloworld.nes - a "ROM" file for the emulator.
+          </p>
+          <p>
+            <label for="explain-nes-examples" class="margin-toggle">&#8853;</label>
+            <input id="explain-nes-examples" type="checkbox" class="margin-toggle">
+            <span class="marginnote">
+              The green screen here is an actual, running NES emulator in your browser! I am using
+              the amazing <a href="https://github.com/bfirsh/jsnes">jsnes</a> by <a href="https://fir.sh/">Ben Firshman</a>.
+              Whenever we compile a .nes file, I will include a running demo like this one. (It's hard
+              to tell in this case, but the emulator is actually running at 60fps.)
+            </span>
+            Open Nintaco and choose "Open" from the "File" menu. Select the helloworld.nes file
+            you just created and click Open. The result should be a green screen.
+          </p>
+          <canvas id="helloworld-canvas" class="nes-example" width="256" height="240"></canvas>
+
+          <h2>Next Steps</h2>
+          <p>
+            If you were able to see the green screen in Nintaco, congratulations! Your development
+            environment is ready to use. In the next chapter, we will discuss what the code you
+            copied and pasted is actually doing, and learn a bit about how the NES hardware works.
+          </p>
+        </section>
+        <p class="chapter-links">
+          <a href="/chapters/02-fundamentalconcepts.html">&laquo; 2. Fundamental Concepts</a>
+          <a href="/chapters/04-hardwareoverview.html">4. NES Hardware &raquo;</a>
+        </p>
+      </article>
+    </div>
+    <footer class="footer-wrapper">
+      <div class="footer-container">
+        <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">
+          <img class="license-logo" alt="Creative Commons License" src="https://licensebuttons.net/l/by-nc-sa/4.0/88x31.png">
+        </a>
+        <p class="license-text">This work by Kevin Zurawel is licensed under a<br>
+          <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a>.
+        </p>
+      </div>
+    </footer>
+    <script src="/js/prism.js"></script>
+    <script src="/js/jsnes.min.js"></script>
+    <script src="/js/jsnes_helpers.js"></script>
+    <script>
+      const canvas = new Canvas(document.getElementById('helloworld-canvas'));
+      const nes = new jsnes.NES({
+        onFrame: (frameBuffer) => {
+          canvas.convertNESBuffer(frameBuffer);
+          canvas.writeBuffer();
+        },
+        onAudioSample: (left, right) => {
+          return;
+        }
+      });
+
+      fetchAndRunROM('/roms/helloworld.nes', nes, createFrameHandler);
+    </script>
+  </body>
+</html>

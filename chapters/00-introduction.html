@@ -1,0 +1,133 @@
+<!doctype html>
+<html>
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta charset="utf-8">
+    <title>Famicom Party | Introduction</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/prism.css">
+		<!-- Matomo -->
+		<script type="text/javascript">
+			var _paq = _paq || [];
+			/* tracker methods like "setCustomDimension" should be called before "trackPageView" */
+			_paq.push(['trackPageView']);
+			_paq.push(['enableLinkTracking']);
+			(function() {
+				var u="//analytics.famicom.party/";
+				_paq.push(['setTrackerUrl', u+'piwik.php']);
+				_paq.push(['setSiteId', '1']);
+				var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+				g.type='text/javascript'; g.async=true; g.defer=true; g.src=u+'piwik.js'; s.parentNode.insertBefore(g,s);
+			})();
+		</script>
+		<!-- End Matomo Code -->
+  </head>
+  <body>
+    <header class="header-wrapper">
+      <h1 class="site-title"><a href="/"><img src="/img/famicomparty.png" alt="famicom party"></a></h1>
+			<nav class="header-links">
+        <ul>
+          <li><a href="https://famicom.party">Home</a></li>
+          <li><a href="https://book.famicom.party">The Book</a></li>
+          <li><a href="https://blog.famicom.party">The Blog</a></li>
+        </ul>
+			</nav>
+    </header>
+    <div class="wrapper">
+      <article>
+        <h1>Introduction</h1>
+
+        <section>
+          <p>
+          Sometime in the fall of 1990, my parents gave me a Nintendo Entertainment
+          System Action Set: a grey, boxy Control Deck, two controllers, a bright orange
+          "Zapper" light gun, and a cartridge that contained both <em>Super Mario
+          Bros.</em> and <em>Duck Hunt</em>.
+          <label for="nes-console-set" class="margin-toggle">&#8853;</label>
+          <input type="checkbox" id="nes-console-set" class="margin-toggle">
+          <span class="marginnote">
+            <img src="/img/NES-Console-Set.jpg" alt="Image of an NES console"><br>
+            An NES console with one controller.<br>Photo by <a href="https://commons.wikimedia.org/wiki/User:Evan-Amos">Evan Amos</a>.
+          </span>
+          The Control Deck plugged into the big CRT TV
+          we had in the basement via an RF switch, basically an antenna that fed video
+          from the Control Deck to the TV when you tuned it to Channel 3. It was the
+          first video game console we had ever owned, and I loved it.</p>
+
+          <p>I spent a lot of time in the basement that year. At first, my dad did too -
+          he was working his way through <em>Super Mario Bros.</em>, learning where the
+          secret Warp Zones were located and how to get past the menacing Hammer Bros.
+          Eventually he defeated Bowser (or “the dragon”, as he called him), saved the
+          princess, and never really played an NES game ever again.</p>
+
+          <p>
+            I was hooked, though. We got a promotional letter in the mail
+            offering a free copy of <em>Dragon Warrior</em>
+            for subscribing to Nintendo Power magazine; signing
+            up for a $20 magazine subscription to get a $50 game was a
+            no-brainer.
+            <label for="dragon-warrior-box" class="margin-toggle">&#8853;</label>
+            <input type="checkbox" id="dragon-warrior-box" class="margin-toggle">
+            <span class="marginnote">
+              <img src="/img/Dragon_Warrior-box.jpg" alt="Dragon Warrior box"><br>
+              Dragon Warrior (US box art).
+            </span>
+            <em>Dragon Warrior</em> introduced me to RPGs in the
+            same way that <em>Super Mario Bros.</em> had introduced me to
+            platformers. There were plenty of other games that I spent time
+            with, too: <em>Ducktales</em>, <em>Final Fantasy</em>,
+            <em>Contra</em>, and <em>Mega Man III</em> were some of my
+            favorites.</p>
+
+          <p>The NES ultimately set me on a career path. As a kid, I knew that video
+          games were special, and that making video games was what I wanted to do as an
+          adult. I had the (mistaken) belief that a career making video games meant a
+          career <strong>playing</strong> video games. I started learning C++ once my
+          family got a computer because that was what “real” programmers used. (Little
+          did I know that NES programmers don't use C++, but in my defense I was young
+          and naive.) I never made any actual games, though. Game programming always
+          seemed more complicated than I was prepared for, and besides, there was no
+          shortage of great games from other people waiting to be played.</p>
+
+          <p>
+          That dream stuck with me, and after years of being a professional web
+          developer I started learning NES development. (I got a strong nudge in the
+          right direction from Nathan Altice’s excellent <em>I Am Error</em>.)
+          <label for="i-am-error" class="margin-toggle">&#8853;</label>
+          <input type="checkbox" id="i-am-error" class="margin-toggle">
+          <span class="marginnote">
+            <img src="/img/i-am-error.jpg" alt="I Am Error, front cover"><br>
+            <a href="https://mitpress.mit.edu/books/i-am-error"><em>I Am Error</em></a>.
+          </span>
+          It was hard to know where to begin. There were plenty of resources around the
+          internet, but they were all incomplete or inaccurate in some way. I got started
+          with bunnyboy's <a href="http://nintendoage.com/forum/messageview.cfm?catid=22&threadid=7155">"Nerdy Nights"</a> series on the NintendoAge forums. Then I found
+          tepples' <a href="https://github.com/pinobatch/nrom-template">NROM template</a> on GitHub, and started learning the ca65 assembler.
+          After months of struggling to understand PPU writes, attribute tables, and
+          scroll registers, it all started to click. I'm glad that I had the experience
+          of fighting with these concepts to learn on my own, but I wish that I could
+          have had a guide that started from scratch and taught all of the essentials of
+          NES development.</p>
+
+          <p>My hope is that the book you are now reading will serve as that guide.</p>
+        </section>
+        <p class="chapter-links">
+          <a href="/">&laquo; Table of Contents</a>
+          <a href="/chapters/01-briefhistory.html">1. A Brief History of the NES &raquo;</a>
+        </p>
+      </article>
+    </div>
+    <footer class="footer-wrapper">
+      <div class="footer-container">
+        <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">
+          <img class="license-logo" alt="Creative Commons License" src="https://licensebuttons.net/l/by-nc-sa/4.0/88x31.png">
+        </a>
+        <p class="license-text">This work by Kevin Zurawel is licensed under a<br>
+          <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a>.
+        </p>
+      </div>
+    </footer>
+    <script src="/js/prism.js"></script>
+  </body>
+</html>

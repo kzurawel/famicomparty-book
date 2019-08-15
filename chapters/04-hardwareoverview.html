@@ -1,0 +1,290 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Famicom Party | NES Hardware</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/prism.css">
+		<!-- Matomo -->
+		<script type="text/javascript">
+			var _paq = _paq || [];
+			/* tracker methods like "setCustomDimension" should be called before "trackPageView" */
+			_paq.push(['trackPageView']);
+			_paq.push(['enableLinkTracking']);
+			(function() {
+				var u="//analytics.famicom.party/";
+				_paq.push(['setTrackerUrl', u+'piwik.php']);
+				_paq.push(['setSiteId', '1']);
+				var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+				g.type='text/javascript'; g.async=true; g.defer=true; g.src=u+'piwik.js'; s.parentNode.insertBefore(g,s);
+			})();
+		</script>
+		<!-- End Matomo Code -->
+  </head>
+  <body>
+    <header class="header-wrapper">
+      <h1 class="site-title"><a href="/"><img src="/img/famicomparty.png" alt="famicom party"></a></h1>
+			<nav class="header-links">
+        <ul>
+          <li><a href="https://famicom.party">Home</a></li>
+          <li><a href="https://book.famicom.party">The Book</a></li>
+          <li><a href="https://blog.famicom.party">The Blog</a></li>
+        </ul>
+			</nav>
+    </header>
+    <div class="wrapper">
+      <article>
+        <h1>4. NES Hardware</h1>
+
+        <section>
+          <p>
+            Before we look at assembly, let's start with an overview of the NES itself.
+          </p>
+
+          <h2>The Console</h2>
+          <p>
+            If you were to open up an NES console and take a look at its insides, you would
+            see something like this:
+          </p>
+          <figure>
+            <img src="/img/NES-Mk1-Motherboard-Top.jpg">
+            <figcaption>An NTSC (US/Japan) NES motherboard. Photo by Evan Amos.</figcaption>
+          </figure>
+          <p>
+            Visually, the NES motherboard is dominated by the cartridge connector at the top
+            and two large chips. On the left side is this chip, labelled "RP2A03":
+          </p>
+          <figure>
+            <img src="/img/2a03.jpg">
+            <figcaption>The Ricoh 2A03 CPU/APU.</figcaption>
+          </figure>
+          <p>
+            And on the right side is this other chip, labelled "RP2C02":
+          </p>
+          <figure>
+            <img src="/img/2c02.jpg">
+            <figcaption>The Ricoh 2C02 PPU.</figcaption>
+          </figure>
+          <p>
+            Together, these two chips provide all of the NES' processing power. The first chip,
+            the 2A03, is the NES' CPU - "central processing unit". The 2A03 is based on
+            the MOS Technologies 6502 processor, with a few special tweaks by its producer,
+            Ricoh.
+            <label for="ricoh-6502-license" class="margin-toggle">&#8853;</label>
+            <input id="ricoh-6502-license" type="checkbox" class="margin-toggle">
+            <span class="marginnote">
+              When I say the 2A03 is "based on" the 6502, there was really only one major difference
+              between the two: the 2A03 lacks support for a feature in the 6502 called "binary
+              coded decimal" (BCD) mode. BCD allows the binary numbers the CPU works with
+              to act like decimal numbers when adding or subtracting. The BCD circuitry in
+              the 6502 was covered by a separate licensing agreement that Ricoh was not
+              party to, so Ricoh could not legally include BCD mode in its processors
+              even though it had full schematics of how the mode was implemented in silicon.
+              To get around this issue, Ricoh fabricated a "full" 6502 but cut all electrical
+              connections between the BCD portion of the chip and the rest of the processor.
+            </span>
+            Ricoh also included within the 2A03 a full APU - "audio processing unit"
+            - that handles music and sound effects.
+          </p>
+          <p>
+            The second chip, the 2C02, is the NES' PPU - "picture processing unit" -, what you
+            might think of nowadays as a "graphics card". The PPU receives instructions from
+            the CPU and translates them into output for the screen. The CPU knows nothing about
+            how televisions work; it leaves all of that processing to the PPU.
+          </p>
+
+          <h2>Cartridges</h2>
+          <p>
+            NES games are distributed via plastic cartridges (or "Game Paks", as Nintendo called
+            them in the US). Inside each cartridge is a small circuit board that looks something
+            like this:
+          </p>
+          <figure>
+            <img src="/img/Tetris-Cartridge-Board.jpg">
+            <figcaption>The cartridge circuit board for <em>Tetris</em>. Photo by Evan Amos.</figcaption>
+          </figure>
+          <p>
+            Much like the console motherboard, cartridge circuit boards are dominated by two
+            large chips. The left-side chip is labelled "PRG", and the right-side chip is labelled "CHR".
+            PRG-ROM is "program ROM", and it contains all of the game's code (machine code). CHR-ROM is
+            "character ROM", which holds all of the game's graphics data.
+            <label for="additional-chips" class="margin-toggle">&#8853;</label>
+            <input id="additional-chips" type="checkbox" class="margin-toggle">
+            <span class="marginnote">
+              There are two additional chips on this board. To the right of the two main ROMs is the "CIC"
+              (Checking Integrated Circuit) or <a href="https://en.wikipedia.org/wiki/CIC_(Nintendo)">"lockout"</a> chip,
+              an attempt to ensure that only Nintendo-produced cartridges would work in an NES. (The CIC chip is also the reason
+              why your NES games often flicker repeatedly until you take them out and put them back in,
+              hopefully <em>without</em> blowing on the contacts first.) Under the two ROM chips is the "MMC1",
+              a memory management controller which we will cover in detail much later in this book.
+            </span>
+          </p>
+          <p>
+            These two ROM chips have their pins connected to a series of gold connectors at the edge of the cartridge board.
+            When the cartridge is inserted into the console's cartridge slot, the gold connectors make electrical
+            contact with an identical set of connectors in the console. The result is that the PRG-ROM is electrically
+            wired directly to the 2A03 CPU, and the CHR-ROM is wired directly to the 2C02 PPU.
+          </p>
+          <figure>
+            <img src="/img/cartridge-in-console.jpg">
+            <figcaption>A diagram showing how the cartridge's ROM chips connect to the console's processors.</figcaption>
+          </figure>
+          <h2>What does this have to do with the test project?</h2>
+          <p>
+            If you look back at the test project's assembly source, you'll notice several lines that start with
+            <code>.segment</code>. These are <em>assembler directives</em> - something we'll explore in the
+            next chapter - that dictate where in the finished ROM file certain pieces of code should go.
+          </p>
+          <pre class="code line-numbers"><code class="lang-asm6502">.segment "HEADER"
+.segment "CODE"
+.segment "VECTORS"
+.segment "CHARS"
+.segment "STARTUP"</code></pre>
+          <p>
+            Two of these segments are not part of the game's code per se.
+            The <code>STARTUP</code> segment doesn't actually do anything; it's needed for C code compiled
+            down to 6502 assembly, but we won't be using it. The <code>HEADER</code> segment contains
+            information for emulators about what kind of chips are present in the cartridge.
+          </p>
+          <p>
+            The other segments line up to the PRG/CHR split. <code>CODE</code> is, of course,
+            the game code that is stored in the PRG-ROM. <code>VECTORS</code> is a way to specify
+            code that should appear at the very end of the PRG-ROM block (for reasons we will discuss
+            later). And <code>CHARS</code> represents the entire contents of the CHR-ROM, generally
+            included as a binary file.
+          </p>
+          <p>
+            So, what are the contents of our CHR-ROM chip, and therefore the graphics that our game will display?
+          </p>
+          <pre class="code line-numbers"><code class="lang-asm6502">.segment "CHARS"
+.res 8192</code></pre>
+          <p>
+            <code>.res</code> is another assembler directive that tells the assembler to "reserve" a
+            certain amount of blank space - in this case, 8,192 bytes. But if the entire CHR-ROM is
+            empty, where does the green background that our test project displays come from?
+          </p>
+
+          <h2>Colors and Palettes</h2>
+          <p>
+            When I said before that the CHR-ROM chip contains "all" of the graphics for our game,
+            I was simplifying a bit. To be more precise, the CHR-ROM chip contains <em>patterns</em>
+            of different colors to be displayed in the game. The colors themselves, however, are
+            part of the PPU itself. The PPU knows how to display a fixed set of 64 colors.
+            <label for="color-palette-limits" class="margin-toggle">&#8853;</label>
+            <input type="checkbox" id="color-palette-limits" class="margin-toggle">
+            <span class="marginnote">
+              Observant readers may notice that the color palette image here only contains 56 colors,
+              not 64. The reason for this is that eight of the 64 colors the PPU knows how to display
+              are just black. This is due to a quirk in how NTSC CRT televisions display color,
+              not a mistake in designing the hardware.
+            </span>
+          </p>
+          <figure>
+            <img src="/img/NES_color_palette.png">
+            <figcaption>The NES color palette.</figcaption>
+          </figure>
+
+          <p>
+            Due to hardware limitations, you can't use all 64 colors at the same time. Instead,
+            you assign colors to the system's eight four-color <em>palettes</em>. Four of these
+            palettes are used for the "background", and the other four are used for the "foreground".
+          </p>
+          <p>
+            The eight palettes have one additional limitation: the first color of each of the eight
+            palettes must be the same. This first color is used as a "default" background color
+            (when nothing else is being drawn to the background for a given pixel, the default
+            color is used), and it serves as a transparency color for the foreground (foreground
+            pixels drawn with the first color act as transparent, allowing the background pixel
+            "behind" them to show through). These limitations mean that the NES can display
+            a maximum of 25 colors at a time - the one "default" color, and eight palettes
+            with three other colors each.
+          </p>
+
+          <figure>
+            <img src="/img/SMB_palettes.png">
+            <figcaption style="margin-bottom:2rem">The eight palettes used in World 1-1 of Super Mario Bros. The top four
+            palettes are used for the foreground and the bottom four palettes are used for the
+            background. Notice that many elements, both foreground and background, are composed
+            of the same patterns but different palettes - e.g. the different-colored turtles
+            in the foreground and the bush/cloud graphics in the background. The blue first
+            color of each palette is the color of the "sky" in the background of World 1-1.</figcaption>
+          </figure>
+
+          <p style="clear:both">
+            The PPU refers to each color with a one-byte number. Palette information is
+            stored in a specific location of the PPU's memory map (separate RAM that is
+            only accessed by the PPU itself). The 32-byte region in PPU memory from <code>$3f00</code>
+            to <code>$3f20</code> holds the contents of the eight palettes in sequence. The "default color",
+            being the first color of each palette, is stored at <code>$3f00</code>, <code>$3f04</code>,
+            <code>$3f08</code>, <code>$3f0c</code>, <code>$3f10</code>, <code>$3f14</code>,
+            <code>$3f18</code>, and <code>$3f1c</code>.
+            <label for="default-color-repetition" class="margin-toggle">&#8853;</label>
+            <input type="checkbox" id="default-color-repetition" class="margin-toggle">
+            <span class="marginnote">
+              While it is common to repeat the first color for each palette manually,
+              technically the PPU only cares about the value written to <code>$3f00</code>. Our
+              test program takes advantage of this fact to cut down on the amount of
+              code that needs to be written.
+            </span>
+          </p>
+
+          <figure>
+            <img src="/img/NES_color_palette_with_numbers.png">
+            <figcaption>The NES color palette, overlaid with the byte the PPU uses to
+            refer to each color.</figcaption>
+          </figure>
+
+          <h2>Back to the test project</h2>
+
+          <p>
+            Referencing the color chart above, the green background color of our test
+            project is <code>$29</code>. If we look back at our test project's code,
+            we find this:
+          </p>
+
+          <pre class="code line-numbers" data-start="31"><code class="lang-asm6502">LDA #$29</code></pre>
+
+          <p>
+            This line of assembly code tells the processor to get ready to use the
+            number <code>$29</code>, which corresponds to the green we display in the background.
+            We'll look at the details of how this line (and much of the rest of the
+            test project's source code) works in the next chapter.
+          </p>
+        </section>
+
+        <p class="chapter-links">
+          <a href="/chapters/03-gettingstarted.html">&laquo; 3. Getting Started</a>
+          <a href="/chapters/05-6502assembly.html">5. Introducing 6502 Assembly &raquo;</a>
+        </p>
+      </article>
+    </div>
+    <footer class="footer-wrapper">
+      <div class="footer-container">
+        <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">
+          <img class="license-logo" alt="Creative Commons License" src="https://licensebuttons.net/l/by-nc-sa/4.0/88x31.png">
+        </a>
+        <p class="license-text">This work by Kevin Zurawel is licensed under a<br>
+          <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a>.
+        </p>
+      </div>
+    </footer>
+    <script src="/js/prism.js"></script>
+    <script src="/js/jsnes.min.js"></script>
+    <!-- <script src="/js/jsnes_helpers.js"></script> -->
+    <!-- <script> -->
+    <!--   const canvas = new Canvas(document.getElementById('helloworld&#45;canvas')); -->
+    <!--   const nes = new jsnes.NES({ -->
+    <!--     onFrame: (frameBuffer) => { -->
+    <!--       canvas.convertNESBuffer(frameBuffer); -->
+    <!--       canvas.writeBuffer(); -->
+    <!--     }, -->
+    <!--     onAudioSample: (left, right) => { -->
+    <!--       return; -->
+    <!--     } -->
+    <!--   }); -->
+    <!--  -->
+    <!--   fetchAndRunROM('/roms/helloworld.nes', nes, createFrameHandler); -->
+    <!-- </script> -->
+  </body>
+</html>

@@ -1,0 +1,576 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Famicom Party | Introducing 6502 Assembly</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/prism.css">
+		<!-- Matomo -->
+		<script type="text/javascript">
+			var _paq = _paq || [];
+			/* tracker methods like "setCustomDimension" should be called before "trackPageView" */
+			_paq.push(['trackPageView']);
+			_paq.push(['enableLinkTracking']);
+			(function() {
+				var u="//analytics.famicom.party/";
+				_paq.push(['setTrackerUrl', u+'piwik.php']);
+				_paq.push(['setSiteId', '1']);
+				var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+				g.type='text/javascript'; g.async=true; g.defer=true; g.src=u+'piwik.js'; s.parentNode.insertBefore(g,s);
+			})();
+		</script>
+		<!-- End Matomo Code -->
+  </head>
+  <body>
+    <header class="header-wrapper">
+      <h1 class="site-title"><a href="/"><img src="/img/famicomparty.png" alt="famicom party"></a></h1>
+			<nav class="header-links">
+        <ul>
+          <li><a href="https://famicom.party">Home</a></li>
+          <li><a href="https://book.famicom.party">The Book</a></li>
+          <li><a href="https://blog.famicom.party">The Blog</a></li>
+        </ul>
+			</nav>
+    </header>
+    <div class="wrapper">
+      <article>
+        <h1>5. Introducing 6502 Assembly</h1>
+
+        <section>
+          <p>
+            The "Hello World" program you created in Chapter 3 is probably unlike any other you have ever seen:
+            44 lines of code, mostly composed of three-letter acronyms and numbers, just to
+            change the color of the screen. What did you copy and paste?
+          </p>
+          <p>
+            As you can probably guess from the title of this chapter, helloworld.asm contained
+            <em>assembly</em> code.
+            <label for="asm-file-extension" class="margin-toggle">&#8853;</label>
+            <input id="asm-file-extension" type="checkbox" class="margin-toggle">
+            <span class="marginnote">
+              I prefer to use the <code>.asm</code> extension for assembly files, but the
+              choice is pretty arbitrary. Some developers prefer to use <code>.s</code> for
+              their assembly files. Ultimately, the choice is yours - ca65 will assemble
+              any file extension as long as the contents are assembly code.
+            </span>
+            Assembly is one layer of abstraction above machine code. Writing assembly
+            requires detailed knowledge of a processor's instruction set, but it is
+            far more readable than machine code's stream of bytes. Let's look at
+            some example assembly code to see how it works:
+          </p>
+
+          <pre class="code line-numbers"><code class="lang-asm6502">.proc main
+  LDX PPUSTATUS
+  LDX #$3f
+  STX PPUADDR
+  LDX #$00
+  STX PPUADDR
+
+copy_palettes:
+  LDA palettes,x
+  STA PPUDATA
+  INX
+  CPX #$20  ; 32 colors total
+  BNE copy_palettes</code></pre>
+
+          <h3>Separation of instructions and data</h3>
+          <p>
+            The three-letter words in all caps on lines 2-6 and 9-13 are called <em>opcodes</em>.
+            Each one represents an instruction from the processor's instruction set, but instead
+            of referring to them by number, they now have names. <code>LDA</code>, for example, means "load
+            accumulator". We'll be learning a few dozen opcodes over the course of this book; there
+            are 56 "official" 6502 assembly opcodes in total.
+          </p>
+
+          <p>
+            Having instructions represented with short "words" means that we can now distinguish
+            between instructions and data visually, instead of having to work through the code
+            byte-by-byte. Anything to the right of an opcode is data that goes with that instruction.
+            We call data for an instruction an <em>operand</em>. On line 3, for example,
+            <code>LDX #$3f</code> is an instruction to "load the X register with the hex value $3f".
+            <code>LDX</code> is the opcode, and <code>#$3f</code> is the operand.
+            <label for="opcode-letter-case" class="margin-toggle">&#8853;</label>
+            <input id="opcode-letter-case" type="checkbox" class="margin-toggle">
+            <span class="marginnote">
+              Here, and throughout this book, I will be presenting opcodes in all-caps, but this
+              is a personal choice. The assembler will accept lowercase opcodes as well, and
+              some developers prefer lowercase. The same applies to operand values - "$3f" can
+              also be written as "$3F".
+            </span>
+          </p>
+
+          <h3>Constants and labels</h3>
+          <p>
+            While the separation of instructions and data is incredibly useful, assembly gives us
+            several other tools as well. The operands on lines 2, 4, 6, and 10, in all-caps, are
+            <em>constants</em> defined elsewhere. When the assembler (ca65) is run, it will replace
+            the name of the constant (e.g. <code>PPUSTATUS</code>) with its value (e.g. <code>$2002</code>).
+            You can make a constant by using the equal sign: <code>PPUSTATUS = $2002</code>.
+          </p>
+          <p>
+            Assembly also lets us set <em>labels</em> - named places in our code that can be referenced later.
+            On line 8, a new label, <code>copy_palettes</code>, is defined. What makes a label a label is the
+            colon (:) that it is followed by. On line 13, the label is used as an operand to the <code>BNE</code>
+            opcode. We'll talk about the specifics of how it works later, but line 13 is essentially repeating
+            the code from lines 8-13 again. When the assembler is run, it replaces labels in your assembly
+            code with actual memory addresses in the machine code output.
+          </p>
+
+          <h3>Comments</h3>
+          <p>
+            You can add <em>comments</em> to your assembly code using the semicolon (;) character. Anything from the
+            semicolon to the end of the line is treated as a comment and will be stripped out when you
+            run your code through an assembler. Comments are useful for reminding yourself what a certain
+            piece of code is meant to do. In our example code above, you can see a comment on line 12.
+          </p>
+
+          <h3>Assembler directives</h3>
+          <p>
+            Finally, assembly code gives us <em>directives</em> - instructions for the assembler that affect
+            the conversion from assembly to machine code, rather than instructions for the processor where
+            the machine code will be executed. Directives start with a period (.). The example code uses
+            the <code>.proc</code> directive on line 1 to indicate a new lexical scope (more on that later).
+            Another common directive is <code>.byte</code>, which indicates that the following bytes should
+            be copied raw into the machine code output rather than trying to process them as opcodes or operands.
+          </p>
+
+          <h2>Your First Opcodes: Data Movement</h2>
+          <p>
+            Now that we have seen what 6502 assembly looks like, let's start learning it! I have broken out
+            the opcodes that you will learn over the course of the book into seven major groups. The first
+            group comprises instructions that move data between registers and memory.
+          </p>
+
+          <h3>Loading data: LDA, LDX, LDY</h3>
+          <p>
+            The "LD" commands load data into a register. As a reminder, the 6502 has three registers to
+            work with: "A" or "accumulator", which can do math, and "X" and "Y", the "index registers".
+            <code>LDA</code> loads data into the accumulator, <code>LDX</code> loads data into the X
+            register, and <code>LDY</code> loads data into the Y register.
+          </p>
+          <p>
+            There are two main sources for this data: loading from a memory address and loading a given
+            value. Which source is used is based on how you write the operand for the opcode. If you
+            use a 16-bit value (four hex digits), it will load the contents of that memory address.
+            If you use a hash sign (#) followed by an 8-bit value (two hex digits), it will load the
+            exact value you used. Here is an example:
+          </p>
+          <pre class="code line-numbers"><code class="lang-asm6502">LDA $3f00  ; load contents of memory address $3f00
+           ; into the accumulator
+LDA #$3f   ; load the value $3f into the accumulator</code></pre>
+          <p>
+            These different operand formats are called <em>addressing modes</em>. The 6502 can use
+            eleven different addressing modes (though most opcodes are limited to a subset of them).
+            <label for="addressing-modes" class="margin-toggle">&#8853;</label>
+            <input id="addressing-modes" type="checkbox" class="margin-toggle">
+            <span class="marginnote">
+              In case you're curious, the eleven addressing modes are Accumulator, Immediate, Implied,
+              Relative, Absolute, Zeropage, Indirect, Absolute Indexed, Zeropage Indexed,
+              Indexed Indirect, and Indirect Indexed.<br>
+            </span>
+            The two modes we've just seen are <strong>absolute</strong> mode (providing a memory address)
+            and <strong>immediate</strong> mode (providing an exact value). We will learn more
+            addressing modes as needed over the course of the book.
+          </p>
+          <p>
+            When your code is run through the assembler, the different addressing modes actually translate
+            to different entries in the instruction set. <code>LDA $3f00</code> becomes <code>ad 00 3f</code> -
+            "ad" is the instruction set number of the "LDA absolute mode" instruction, and $3f00 is placed
+            in little-endian order. <code>LDA #$3f</code>, though, becomes <code>a9 3f</code> - "a9" being
+            the instruction set number for "LDA immediate mode". The assembler is smart enough to insert
+            the correct instruction set number based on how you write the operand, so you don't need to worry
+            about <em>which</em> "LDA" you need to use.
+          </p>
+
+          <h3>Storing data: STA, STX, STY</h3>
+          <p>
+            The "ST" opcodes do the reverse of the "LD" opcodes - they store the contents of a register to
+            a memory address. STA stores the contents of the accumulator to the location specified by its
+            operand, STX stores the contents of the X register, and STY stores the contents of the Y register.
+            The ST instructions cannot use immediate mode, since it doesn't make sense to store the contents
+            of a register into a literal number. After a store operation, the register you stored from keeps
+            its same value, allowing you to store the same register value in a different location right away.
+          </p>
+
+          <h3>Transferring data: TAX, TAY, TXA, TYA</h3>
+          <p>
+            Finally, the "T" instructions transfer data from one register to another. These opcodes are all
+            read as "transfer from register to register" - TAX, for example, is "transfer from accumulator to
+            X register". The "transfer" in these instructions is more accurately described as a "copy", since
+            after one of these instructions, both registers will have the value of the first register.
+          </p>
+
+          <h3>A small example</h3>
+          <p>
+            Now that you've learned your first ten opcodes (and two addressing modes), let's look at a small
+            example that makes use of them.
+          </p>
+
+          <pre class="code line-numbers"><code class="lang-asm6502">LDA #$a7
+TAY
+STY $3f00</code></pre>
+
+          <p>
+            What does this code do? Let's take it line-by-line:
+          </p>
+          <ol>
+            <li>First, we load the value $a7 into the accumulator. <code>LDA</code> is the opcode that loads
+              data into the accumulator. The <code>#</code> in front of $a7 indicates that we want to
+              use immediate mode, so this is a number to put directly into the accumulator, not a memory
+              address.
+            </li>
+            <li>Next, we copy the value $a7 from the accumulator to the Y register. Now both A and Y have
+              the same value.</li>
+            <li>Finally, we store the value of the Y register ($a7) at memory address $3f00.</li>
+          </ol>
+
+          <h2>Back to the Test Project</h2>
+
+          <p>
+            You now understand enough assembly to work out what most of the test project is doing. Let's
+            look specifically at the <code>main</code> portion, reproduced here:
+          </p>
+
+          <pre class="code line-numbers" data-start="25"><code class="lang-asm6502">.proc main
+  LDX $2002
+  LDX #$3f
+  STX $2006
+  LDX #$00
+  STX $2006
+  LDA #$29
+  STA $2007
+  LDA #%00011110
+  STA $2001
+forever:
+  JMP forever
+.endproc</code></pre>
+
+          <p>
+            Most of this code is made up of loads and stores. The memory addresses that we load from
+            or store to are <code>$2001</code>, <code>$2002</code>, <code>$2006</code>, and <code>$2007</code>.
+            The immediate-mode values that we load are <code>$3f</code>, <code>$00</code>, <code>$29</code>,
+            and <code>%00011110</code> (a binary value, unlike the hex values we use everywhere else).
+          </p>
+
+          <p>
+            Looking more closely at the immediate-mode loads, notice that the first two are <code>$3f00</code>,
+            the address in PPU memory where palettes begin, followed by <code>$29</code>, the green color that
+            we are using in the background. This code is telling the PPU to store <code>$29</code> at address
+            <code>$3f00</code>, but how?
+          </p>
+
+          <h3>Memory-Mapped I/O</h3>
+
+          <p>
+            On the NES, addresses in the <code>$2000</code>-<code>$6000</code> range are reserved for use as
+            <em>memory-mapped I/O</em> (or "MMIO") addresses. "I/O" is "input/output" - sending data between different devices.
+            "Memory-mapped" means that these interfaces to other devices are mapped to memory addresses - in
+            other words, certain memory addresses are not memory at all, but rather connections to other
+            devices.
+          </p>
+
+          <p>
+            Memory addresses in the low <code>$2000</code>s correspond to connections to the PPU.
+            <label for="nesdev-reference" class="margin-toggle">&#8853;</label>
+            <input type="checkbox" id="nesdev-reference" class="margin-toggle">
+            <span class="marginnote">
+              If you want to learn more about the PPU's MMIO addresses (or any other NES topic, for that matter),
+              check out the <a href="http://wiki.nesdev.com/w/index.php/PPU_registers">NESDev Wiki</a>. While
+              it is not the best resource to learn from, it is an invaluable reference to the system, backed
+              by meticulous research from its contributors.
+            </span>
+            There are four
+            MMIO addresses in use in our code; let's take a look at what each one does (along with the name each
+            address is commonly known by).
+          </p>
+
+          <h3><code>$2006</code>: PPUADDR and <code>$2007</code>: PPUDATA</h3>
+
+          <p>
+            The NES CPU (where your code is being executed) doesn't have direct access to the PPU's memory. Instead,
+            CPU memory address <code>$2006</code> lets your code select an address in PPU memory, and <code>$2007</code>
+            lets your code write a byte of data to that address. To set the address you want to write to, store two
+            bytes of data to PPUADDR - first the "high" (left) byte, followed by the "low" (right) byte. Here's how
+            our test project does that:
+          </p>
+
+          <pre class="code line-numbers" data-start="27"><code class="lang-asm6502">  LDX #$3f
+  STX $2006
+  LDX #$00
+  STX $2006</code></pre>
+
+          <p>
+            This code first stores the byte <code>$3f</code> to <code>$2006</code>, then the byte <code>$00</code>
+            to <code>$2006</code> - in other words, it sets the address for any following writes to PPU memory to
+            <code>$3f00</code>, which is the address of the first color of the first palette.
+          </p>
+
+          <p>
+            To store data at the selected PPU memory address, store a byte to PPUDATA:
+          </p>
+
+          <pre class="code line-numbers" data-start="31"><code class="lang-asm6502">  LDA #$29
+  STA $2007</code></pre>
+
+          <p>
+            This writes the byte <code>$29</code> (which represents "green") to the memory address we selected
+            before (<code>$3f00</code>). Each time you store a byte to PPUDATA, the memory address for the
+            next store is incremented by one. If the next lines of code in the program were <code>LDA #$21</code>
+            and <code>STA $2007</code>, the byte <code>$21</code> would be written to PPU address <code>$3f01</code>
+            even though we did not do anything with PPUADDR.
+          </p>
+
+          <h3><code>$2002</code>: PPUSTATUS</h3>
+
+          <p>
+            PPUSTATUS is a read-only MMIO address. When you load from <code>$2002</code>, the resulting byte
+            gives you information about what the PPU is currently doing. Reading from PPUSTATUS has one useful
+            side-effect, as well: it resets the "address latch" for PPUADDR. It takes two writes to PPUADDR
+            to fully specify a memory address, and it is possible that your code might make one write
+            but never get around to doing the second write. Reading from PPUSTATUS makes it so that the
+            next write to PPUADDR will always be considered a "high" byte of an address.
+          </p>
+
+          <p>
+            In our test project, we read ("load") from PPUSTATUS before attempting to write an address to PPUADDR:
+            <label for="writing-to-ppu" class="margin-toggle">&#8853;</label>
+            <input type="checkbox" id="writing-to-ppu" class="margin-toggle">
+            <span class="marginnote">
+              This process - reading from PPUSTATUS, writing two bytes to PPUADDR, and writing bytes to PPUDATA -
+              is something that we will be using <em>all the time</em>. Anything that changes what is displayed
+              to the screen uses this process to tell the PPU what to draw, and virtually everything in a game
+              is going to change what is displayed to the screen. Learning this process well now will be
+              very useful to you in future chapters.
+            </span>
+          </p>
+
+          <pre class="code line-numbers" data-start="26"><code class="lang-asm6502">  LDX $2002
+  LDX #$3f
+  STX $2006
+  LDX #$00
+  STX $2006
+  LDA #$29
+  STA $2007</code></pre>
+
+          <h3><code>$2001</code>: PPUMASK</h3>
+
+          <p>
+            There's still one more thing our test project has to do after it tells the PPU to use color <code>$29</code>
+            as the first color of the first palette - it has to tell the PPU to actually start drawing things to the screen!
+            PPUMASK allows your code to give the PPU instructions about what to draw, as well as set some tweaks to how
+            colors are displayed. The byte that you store to PPUMASK is a set of eight <em>bit flags</em>, where each
+            bit in the byte acts as an on/off switch for a particular property. Here is what each bit does. (Remember,
+            the bits that make up a byte are numbered 0-7, with bit 0 all the way on the right, and bit 7 all the way
+            on the left.)
+          </p>
+
+          <div class="table-wrapper">
+            <table>
+              <caption>PPUMASK bit flags. Source: <a href="http://wiki.nesdev.com/w/index.php/PPU_registers#Mask_.28.242001.29_.3E_write">NESDev Wiki</a></caption>
+              <thead>
+                <tr>
+                  <th>Bit #</th>
+                  <th>Effect</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>0</td>
+                  <td>Greyscale mode enable<br>(0: normal color, 1: greyscale)</td>
+                </tr>
+                <tr>
+                  <td>1</td>
+                  <td>Left edge (8px) background enable<br>(0: hide, 1: show)</td>
+                </tr>
+                <tr>
+                  <td>2</td>
+                  <td>Left edge (8px) foreground enable<br>(0: hide, 1: show)</td>
+                </tr>
+                <tr>
+                  <td>3</td>
+                  <td>Background enable</td>
+                </tr>
+                <tr>
+                  <td>4</td>
+                  <td>Foreground enable</td>
+                </tr>
+                <tr>
+                  <td>5</td>
+                  <td>Emphasize red</td>
+                </tr>
+                <tr>
+                  <td>6</td>
+                  <td>Emphasize green</td>
+                </tr>
+                <tr>
+                  <td>7</td>
+                  <td>Emphasize blue</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            Before we look at the test project, a few notes on these options. Bits 1 and 2
+            enable or disable the display of graphical elements in the left-most eight pixels
+            of the screen. Some games choose to disable these to help avoid flicker during
+            scrolling, which we will learn more about later. Bits 5, 6, and 7 allow your
+            code to "emphasize" certain colors - making one of red, green, or blue brighter
+            and making the other two colors darker. Using one of the emphasis bits essentially
+            applies a color tint to the screen. Using all three at the same time makes the
+            entire screen <em>darker</em>, which many games use as a way to create a transition
+            from one area to another.
+          </p>
+
+          <p>
+            Let's look again at our test project's code. What value does our test project write
+            to PPUMASK?
+          </p>
+
+          <pre class="code line-numbers" data-start="33"><code class="lang-asm6502">  LDA #%00011110
+  STA $2001</code></pre>
+
+          <p>
+            Here is what options we are setting, bit-by-bit:
+          </p>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Bit #</th>
+                  <th>Value</th>
+                  <th>Effect</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>0</td>
+                  <td>0</td>
+                  <td>Greyscale mode disabled</td>
+                </tr>
+                <tr>
+                  <td>1</td>
+                  <td>1</td>
+                  <td>Show leftmost 8px of background</td>
+                </tr>
+                <tr>
+                  <td>2</td>
+                  <td>1</td>
+                  <td>Show leftmost 8px of foreground</td>
+                </tr>
+                <tr>
+                  <td>3</td>
+                  <td>1</td>
+                  <td>Background enabled</td>
+                </tr>
+                <tr>
+                  <td>4</td>
+                  <td>1</td>
+                  <td>Foreground enabled</td>
+                </tr>
+                <tr>
+                  <td>5</td>
+                  <td>0</td>
+                  <td>No red emphasis</td>
+                </tr>
+                <tr>
+                  <td>6</td>
+                  <td>0</td>
+                  <td>No green emphasis</td>
+                </tr>
+                <tr>
+                  <td>7</td>
+                  <td>0</td>
+                  <td>No blue emphasis</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            Since our test project turns on background rendering in its write to
+            PPUMASK, our green background shows up after this line.
+          </p>
+
+          <h2>Wrapping Up the <code>main</code> Code</h2>
+
+          <p>
+            Our test project has written a color to PPU memory and turned on
+            display rendering, so it's all done, right?
+          </p>
+
+          <p>
+            Not so fast. Remember, the CPU fetches and executes instructions one at a time,
+            continuously. Unless we write code to keep the processor busy, it will
+            continue reading (empty) memory and "executing" it, which could lead to
+            disastrous results. Thankfully, there's an easy solution to this problem:
+          </p>
+
+          <pre class="code line-numbers" data-start="35"><code class="lang-asm6502">forever:
+  JMP forever</code></pre>
+
+          <p>
+            We will learn the details of how this works later, but essentially these two lines
+            of code create a <em>label</em> (<code>forever</code>), and then tell the CPU
+            to fetch that label as the next instruction to execute. The CPU goes into an
+            infinite loop, and your project happily does nothing but display its green background.
+          </p>
+
+          <p>
+            We've now covered everything in <code>main</code> (though we still haven't talked about
+            what <code>.proc</code> and <code>.endproc</code> are doing), but there's much
+            more in the test project to discuss. Next, we will learn about interrupt vectors
+            and how our code initializes the NES when it first powers on.
+          </p>
+
+          <h2>Homework</h2>
+
+          <p>
+            Now that you know how the test project sets a background color, try modifying it
+            to display a different color. I've included the color chart from Chapter 4 below.
+            Don't forget to re-assemble and re-link your code before opening it in Nintaco.
+          </p>
+
+          <figure>
+            <img src="/img/NES_color_palette_with_numbers.png">
+            <figcaption>The NES color palette.</figcaption>
+          </figure>
+        </section>
+
+        <p class="chapter-links">
+          <a href="/chapters/04-hardwareoverview.html">&laquo; 4. NES Hardware</a>
+          <a href="/chapters/06-headersinterruptvectors.html">6. Headers and Interrupt Vectors &raquo;</a>
+        </p>
+      </article>
+    </div>
+    <footer class="footer-wrapper">
+      <div class="footer-container">
+        <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">
+          <img class="license-logo" alt="Creative Commons License" src="https://licensebuttons.net/l/by-nc-sa/4.0/88x31.png">
+        </a>
+        <p class="license-text">This work by Kevin Zurawel is licensed under a<br>
+          <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a>.
+        </p>
+      </div>
+    </footer>
+    <script src="/js/prism.js"></script>
+    <script src="/js/jsnes.min.js"></script>
+    <!-- <script src="/js/jsnes_helpers.js"></script> -->
+    <!-- <script> -->
+    <!--   const canvas = new Canvas(document.getElementById('helloworld&#45;canvas')); -->
+    <!--   const nes = new jsnes.NES({ -->
+    <!--     onFrame: (frameBuffer) => { -->
+    <!--       canvas.convertNESBuffer(frameBuffer); -->
+    <!--       canvas.writeBuffer(); -->
+    <!--     }, -->
+    <!--     onAudioSample: (left, right) => { -->
+    <!--       return; -->
+    <!--     } -->
+    <!--   }); -->
+    <!--  -->
+    <!--   fetchAndRunROM('/roms/helloworld.nes', nes, createFrameHandler); -->
+    <!-- </script> -->
+  </body>
+</html>

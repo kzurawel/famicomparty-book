@@ -1,0 +1,372 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Famicom Party | Refactoring</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/prism.css">
+		<!-- Matomo -->
+		<script type="text/javascript">
+			var _paq = _paq || [];
+			/* tracker methods like "setCustomDimension" should be called before "trackPageView" */
+			_paq.push(['trackPageView']);
+			_paq.push(['enableLinkTracking']);
+			(function() {
+				var u="//analytics.famicom.party/";
+				_paq.push(['setTrackerUrl', u+'piwik.php']);
+				_paq.push(['setSiteId', '1']);
+				var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+				g.type='text/javascript'; g.async=true; g.defer=true; g.src=u+'piwik.js'; s.parentNode.insertBefore(g,s);
+			})();
+		</script>
+		<!-- End Matomo Code -->
+  </head>
+  <body>
+    <header class="header-wrapper">
+      <h1 class="site-title"><a href="/"><img src="/img/famicomparty.png" alt="famicom party"></a></h1>
+			<nav class="header-links">
+        <ul>
+          <li><a href="https://famicom.party">Home</a></li>
+          <li><a href="https://book.famicom.party">The Book</a></li>
+          <li><a href="https://blog.famicom.party">The Blog</a></li>
+        </ul>
+			</nav>
+    </header>
+    <div class="wrapper">
+      <article>
+        <h1>8. Refactoring</h1>
+
+        <section>
+          <p>
+            Before we move on to learning more about how the NES draws graphics, let's take some time to reflect
+            on what we've already built. There are a number of improvements we can make now that will be useful
+            in the future. By refactoring now, we will create a useful template for our upcoming projects.
+          </p>
+
+          <h2>Constants</h2>
+
+          <p>
+            There are several places in our code where we use a particular number that doesn't change,
+            such as MMIO addresses for talking with the PPU. It's hard to tell what these numbers are
+            referring to when looking at the code.
+          </p>
+
+          <p>
+            Thankfully, we can replace these abstract numbers with descriptive text, by declaring <i>constants</i>.
+            A constant is essentially a name for one number, which can't be changed. Let's create constants for
+            the PPU addresses we've used so far:
+            <label for="mmio-address-naming" class="margin-toggle">&#8853;</label>
+            <input type="checkbox" id="mmio-address-naming" class="margin-toggle">
+            <span class="marginnote">
+              These names are the generally agreed-upon standard naming for the various MMIO addresses
+              available in the NES. When looking through references like the NESDev wiki, you will
+              see these names used.
+            </span>
+          </p>
+
+          <pre class="code line-numbers"><code class="lang-asm6502">PPUCTRL   = $2000
+PPUMASK   = $2001
+PPUSTATUS = $2002
+PPUADDR   = $2006
+PPUDATA   = $2007</code></pre>
+
+          <p>
+            With these constants, our main code becomes much more readable:
+          </p>
+
+          <pre class="code line-numbers" data-start="25"><code class="lang-asm6502">.proc main
+  LDX PPUSTATUS
+  LDX #$3f
+  STX PPUADDR
+  LDX #$00
+  STX PPUADDR
+  LDA #$29
+  STA PPUDATA
+  LDA #%00011110
+  STA PPUMASK
+forever:
+  JMP forever
+.endproc</code></pre>
+
+          <p>
+            Where do we put these constants? The common approach is to make a separate constants file, which
+            can be included into our main assembly file. We'll call the constants file <code>constants.inc</code>.
+            <label for="why-use-inc" class="margin-toggle">&#8853;</label>
+            <input type="checkbox" id="why-use-inc" class="margin-toggle">
+            <span class="marginnote">
+              Why does this file end in <code>.inc</code> instead of <code>.asm</code>? The constants file
+              is not exactly assembly code; it doesn't have any opcodes. We will
+              use the <code>.asm</code> extension for assembly code files, and <code>.inc</code> for files
+              which are included into an assembly code file.
+            </span>
+            Then, we include the constants file at the top of our <code>.asm</code> file like this:
+          </p>
+
+          <pre class="code line-numbers"><code class="lang-asm6502">.include "constants.inc"</code></pre>
+
+          <h2>Header File</h2>
+
+          <p>
+            We can do the same thing with the <code>.header</code> segment, since it will generally
+            be the same from project to project. Let's make a <code>header.inc</code> file to hold
+            our header content. Now would also be a good time to add some comments:
+          </p>
+
+          <pre class="code line-numbers"><code class="lang-asm6502">.segment "HEADER"
+.byte "NES", $1a ; Magic string that always begins an iNES header
+.byte $02        ; Number of 16KB PRG-ROM banks
+.byte $01        ; Number of 8KB CHR-ROM banks
+.byte %00000001  ; Vertical mirroring, no save RAM, no mapper
+.byte %00000000  ; No special-case flags set, no mapper
+.byte $00        ; No PRG-RAM present
+.byte $00        ; NTSC format</code></pre>
+
+          <p>
+            Now we can delete the <code>.segment "HEADER"</code> section of our main <code>.asm</code>
+            file, and include our new header file. The top of our <code>.asm</code> file should now
+            look like this:
+          </p>
+
+          <pre class="code line-numbers"><code class="lang-asm6502">.include "constants.inc"
+.include "header.inc"
+
+.segment "CODE"</code></pre>
+
+          <p>
+            When the assembler and linker run, they will take the contents of <code>header.inc</code>
+            and put them in the correct place in the output ROM, exactly the same as if we had
+            put it directly into the assembly file.
+          </p>
+
+          <h2>ca65 Imports and Exports</h2>
+
+          <p>
+            A full reset handler can become quite large, so it can be useful to put it into a separate
+            file. But we can't just <code>.include</code> it, because we need a way to reference the reset handler
+            in the <code>VECTORS</code> segment.
+          </p>
+
+          <p>
+            The solution is to use ca65's ability to import and export <code>.proc</code> code. We use
+            the <code>.export</code> directive to inform the assembler that a certain proc should be
+            available in other files, and the <code>.import</code> directive to use the proc
+            somewhere else.
+          </p>
+
+          <p>
+            First, let's create <code>reset.asm</code>, including the <code>.export</code> directive:
+          </p>
+
+          <pre class="code line-numbers"><code class="lang-asm6502">.include "constants.inc"
+
+.segment "CODE"
+.import main
+.export reset_handler
+.proc reset_handler
+  SEI
+  CLD
+  LDX #$00
+  STX PPUCTRL
+  STX PPUMASK
+vblankwait:
+  BIT PPUSTATUS
+  BPL vblankwait
+  JMP main
+.endproc</code></pre>
+
+          <p>
+            There are a few things I'd like to point out in this file. First, the file ends in <code>.asm</code>,
+            because it contains opcodes. Second, we include the constants file so that it can be used here.
+            Third, we need to specify which code segment this <code>.proc</code> belongs in, so the linker
+            knows how to put everything together. Finally, note that we are importing <code>main</code>. This
+            way, the assembler knows what memory address the <code>main</code> proc is located at, so
+            the reset handler can jump to the correct address.
+          </p>
+
+          <p>
+            Now that we have a separate reset file, we'll use <code>reset_handler</code> inside our code:
+          </p>
+
+          <pre class="code line-numbers" data-start="4"><code class="lang-asm6502">.segment "CODE"
+.proc irq_handler
+  RTI
+.endproc
+
+.proc nmi_handler
+  RTI
+.endproc
+
+.import reset_handler
+
+.export main
+.proc main
+  ; contents of main here
+.endproc
+
+.segment "VECTORS"
+.addr nmi_handler, reset_handler, irq_handler</code></pre>
+
+          <p>
+            On line 13, where our <code>.proc reset_handler</code> used to be located, we now import
+            the proc from an external file. Note that you do not need to specify which file the proc
+            comes from - the assembler scans all <code>.asm</code> files for exports before it starts
+            assembling, so it already knows what external procs are available and where they are located.
+            (Note that this also means you can't export two procs with the same name - the assembler
+            will have no way to tell which one you are referring to in an <code>.import</code>.)
+            <label for="multiple-segments" class="margin-toggle">&#8853;</label>
+            <input type="checkbox" id="multiple-segments" class="margin-toggle">
+            <span class="marginnote">
+              You may have noticed that <code>reset.asm</code> uses <code>.segment "CODE"</code>,
+              and our main assembly file also uses <code>.segment "CODE"</code>. What happens
+              when we assemble and link these files? The linker finds everything that belongs
+              to the same segment and puts it together. The order does not particularly matter,
+              since labels are converted into addresses at link time.
+            </span>
+            We also have to export our <code>main</code> proc, so that the reset handler can import
+            it and know where to jump to when it is finished.
+          </p>
+
+          <h2>Custom Linker Configuration</h2>
+
+          <p>
+            When we linked our sample project back in <a href="/chapters/03-gettingstarted.html">Chapter 3</a>,
+            we used this command:
+          </p>
+
+          <pre class="code"><code>ld65 helloworld.o -t nes -o helloworld.nes</code></pre>
+
+          <p>
+            The <code>-t nes</code> tells ld65 to use the default linker configuration for
+            the NES. This is why we have the "STARTUP" segment, despite never using it.
+            While the default configuration works for the sample project, it can lead
+            to problems as our code becomes larger and more complicated. So, instead
+            of using the default configuration, we will write our own linker configuration
+            with only the segments and features that we need.
+          </p>
+
+          <p>
+            Our custom linker config will be in a file called <code>nes.cfg</code>, which
+            will look like this:
+          </p>
+
+          <pre class="code line-numbers"><code class="lang-asm6502">MEMORY {
+  HEADER: start=$00, size=$10, fill=yes, fillval=$00;
+  ZEROPAGE: start=$10, size=$ff;
+  STACK: start=$0100, size=$0100;
+  OAMBUFFER: start=$0200, size=$0100;
+  RAM: start=$0300, size=$0500;
+  ROM: start=$8000, size=$8000, fill=yes, fillval=$ff;
+  CHRROM: start=$0000, size=$2000;
+}
+
+SEGMENTS {
+  HEADER: load=HEADER, type=ro, align=$10;
+  ZEROPAGE: load=ZEROPAGE, type=zp;
+  STACK: load=STACK, type=bss, optional=yes;
+  OAM: load=OAMBUFFER, type=bss, optional=yes;
+  BSS: load=RAM, type=bss, optional=yes;
+  DMC: load=ROM, type=ro, align=64, optional=yes;
+  CODE: load=ROM, type=ro, align=$0100;
+  RODATA: load=ROM, type=ro, align=$0100;
+  VECTORS: load=ROM, type=ro, start=$FFFA;
+  CHR: load=CHRROM, type=ro, align=16, optional=yes;
+}</code></pre>
+
+          <p>
+            The <code>MEMORY</code> section lays out the regions of memory that segments
+            can be placed into, while the <code>SEGMENTS</code> section describes the
+            segment names we can use in our code and which memory areas they should be
+            linked into. I won't be going into detail on what each setting means, but
+            you can find in-depth documentation in the
+            <a href="https://cc65.github.io/doc/ld65.html">ld65 docs</a>.
+          </p>
+
+          <p>
+            To use this custom linker configuration, we first need to update the segment
+            names in our code to match the config file's segment names. In our case,
+            the only needed changes are moving <code>"CHARS"</code> to <code>"CHR"</code>
+            and removing <code>"STARTUP"</code>.
+          </p>
+
+          <h2>Putting It All Together</h2>
+
+          <p>
+            Finally, we need to update the structure of our files a bit. We will move
+            all of the <code>.asm</code> and <code>.inc</code> files into a sub-directory,
+            <code>src</code>, with our new linker config at the top level. The code
+            we have after all of our refactoring should now look like this:
+          </p>
+
+          <pre class="code"><code>08-refactoring
+|
+-- nes.cfg
+-- src
+   |
+   -- constants.inc
+   -- header.inc
+   -- helloworld.asm
+   -- reset.asm</code></pre>
+
+          <p>
+            To assemble and link our code, we will use the following commands (run from
+            the top-level <code>08-refactoring</code> directory):
+          </p>
+
+          <pre class="code"><code class="lang-bash">ca65 src/helloworld.asm
+ca65 src/reset.asm
+ld65 src/*.o -C nes.cfg -o helloworld.nes</code></pre>
+
+          <p>
+            To be clear, what we are doing here is first assembling each <code>.asm</code>
+            file to create <code>.o</code> files. Once that is done, we pass all of the
+            <code>.o</code> files to the linker. Instead of using the default NES
+            linker config (<code>-t nes</code>), we use our new custom config
+            (<code>-C nes.cfg</code>). The output from the linker is placed into
+            the same <code>helloworld.nes</code> ROM file.
+          </p>
+
+          <p>
+            If you would like to download a copy of the files listed above, here is
+            a <a href="/projects/08-refactoring.zip">ZIP file</a> of everything
+            so far. We'll be using this setup as a base for our future projects, so
+            be sure that you are able to assemble, link, and run the code before
+            moving on.
+          </p>
+        </section>
+
+        <p class="chapter-links">
+          <a href="/chapters/07-whydothis.html">&laquo; 7. Why Would Anyone Do This?</a>
+          <a href="/chapters/09-theppu.html">9. The Picture Processing Unit (PPU) &raquo;</a>
+        </p>
+      </article>
+    </div>
+    <footer class="footer-wrapper">
+      <div class="footer-container">
+        <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">
+          <img class="license-logo" alt="Creative Commons License" src="https://licensebuttons.net/l/by-nc-sa/4.0/88x31.png">
+        </a>
+        <p class="license-text">This work by Kevin Zurawel is licensed under a<br>
+          <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a>.
+        </p>
+      </div>
+    </footer>
+    <script src="/js/prism.js"></script>
+    <script src="/js/jsnes.min.js"></script>
+    <!-- <script src="/js/jsnes_helpers.js"></script> -->
+    <!-- <script> -->
+    <!--   const canvas = new Canvas(document.getElementById('helloworld&#45;canvas')); -->
+    <!--   const nes = new jsnes.NES({ -->
+    <!--     onFrame: (frameBuffer) => { -->
+    <!--       canvas.convertNESBuffer(frameBuffer); -->
+    <!--       canvas.writeBuffer(); -->
+    <!--     }, -->
+    <!--     onAudioSample: (left, right) => { -->
+    <!--       return; -->
+    <!--     } -->
+    <!--   }); -->
+    <!--  -->
+    <!--   fetchAndRunROM('/roms/helloworld.nes', nes, createFrameHandler); -->
+    <!-- </script> -->
+  </body>
+</html>

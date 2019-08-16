@@ -447,18 +447,42 @@ OAMDMA    = $2004</code></pre>
           </p>
 
           <p>
-            First, we need to store the data for our sprites. We are going to draw four
-            sprites, one for each "corner" of the spaceship. As discussed earlier, we
-            will store all our sprite information in memory between <code>$0200-$02ff</code>,
-            and copy it to the PPU using DMA transfer (in our NMI handler). For this first
-            foray into sprite graphics, we'll write our sprite data in the reset
-            handler.
+            Next, we will need to fill out an entire palette, instead of just setting
+            the first palette color to green (<code>$29</code>). We'll extend <code>.proc main</code>
+            as follows:
           </p>
 
-          <pre class="code line-numbers"><code class="lang-asm6502">vblankwait:
-  BIT PPUSTATUS
-  BPL blankwait
-  ; new code here
+          <pre class="code line-numbers" data-start="20"><code class="lang-asm6502">.proc main
+  ; write a palette
+  LDX #$3f
+  STX PPUADDR
+  LDX #$00
+  STX PPUADDR
+  LDA #$29
+  STA PPUDATA
+  LDA #$19
+  STA PPUDATA
+  LDA #$09
+  STA PPUDATA
+  LDA #$0f
+  STA PPUDATA</code></pre>
+
+          <p>
+            Notice that we only have to set an address with <code>PPUADDR</code> once;
+            each time we write to <code>PPUDATA</code>, the PPU memory address is
+            automatically increased by one.
+          </p>
+
+          <p>
+            Next, we need to store the data for our sprites. We are going to start by drawing
+            one sprite, the top-left "corner" of the spaceship. As discussed earlier, we
+            will store all our sprite information in memory between <code>$0200-$02ff</code>,
+            and copy it to the PPU using DMA transfer (in our NMI handler). Let's continue
+            modifying <code>.proc main</code> to copy sprite data into <code>$0200-$02ff</code>:
+          </p>
+
+          <pre class="code line-numbers" data-start="35"><code class="lang-asm6502">
+  ; write sprite data
   LDA #$70
   STA $0200 ; Y-coord of first sprite
   LDA #$05
@@ -469,9 +493,49 @@ OAMDMA    = $2004</code></pre>
   STA $0203 ; X-coord of first sprite</code></pre>
 
           <p>
+            Finally, we need to make one more change to <code>.proc main</code>. In our
+            previous examples, after writing palette data, we turn on the screen by
+            writing to <code>PPUMASK</code>. However, now that we are using the NMI
+            handler, we need to tell the CPU to generate NMI events. We can do that
+            by writing to <code>PPUCTRL</code>, like this:
+            <label for="ppuctrl-details" class="margin-toggle">&#8853;</label>
+            <input type="checkbox" id="ppuctrl-details" class="margin-toggle">
+            <span class="marginnote">
+              For full details of the possible options that can be set via
+              <code>PPUCTRL</code> and <code>PPUMASK</code>, see the
+              <a href="http://wiki.nesdev.com/w/index.php/PPU_registers">NESDev wiki</a>.
+            </span>
+          </p>
+
+          <pre class="code line-numbers" data-start="45"><code class="lang-asm6502">
+vblankwait:       ; wait for another vblank before continuing
+  BIT PPUSTATUS
+  BPL vblankwait
+
+  LDA #%10010000  ; turn on NMIs, sprites use first pattern table
+  STA PPUCTRL
+  LDA #%00011110  ; turn on screen
+  STA PPUMASK</code></pre>
+
+          <p>
             At this point, our code will draw a single sprite (the top-left
             of the spaceship) to the screen, at X <code>$80</code>
             and Y <code>$70</code> (near the middle of the screen).
+            The sprite data that we wrote to CPU memory between <code>$0200-$02ff</code>
+            will be copied to PPU memory once per frame by our NMI handler.
+            Assembling, linking, and running this code gives the output seen
+            below.
+          </p>
+
+          <canvas id="sprites-canvas" class="nes-example" width="256" height="240"></canvas>
+
+          <p>
+            While this works, our code is very inefficient. To draw all 64 sprites
+            this way, we would need 128 lines of code. To make our sprite code
+            more manageable, we will store the sprite data separately
+            from the code that writes it to memory, and use a loop
+            to iterate over the data. This requires a few new assembly opcodes,
+            which we will learn next chapter.
           </p>
 
         </section>
@@ -494,20 +558,20 @@ OAMDMA    = $2004</code></pre>
     </footer>
     <script src="/js/prism.js"></script>
     <script src="/js/jsnes.min.js"></script>
-    <!-- <script src="/js/jsnes_helpers.js"></script> -->
-    <!-- <script> -->
-    <!--   const canvas = new Canvas(document.getElementById('helloworld&#45;canvas')); -->
-    <!--   const nes = new jsnes.NES({ -->
-    <!--     onFrame: (frameBuffer) => { -->
-    <!--       canvas.convertNESBuffer(frameBuffer); -->
-    <!--       canvas.writeBuffer(); -->
-    <!--     }, -->
-    <!--     onAudioSample: (left, right) => { -->
-    <!--       return; -->
-    <!--     } -->
-    <!--   }); -->
-    <!--  -->
-    <!--   fetchAndRunROM('/roms/helloworld.nes', nes, createFrameHandler); -->
-    <!-- </script> -->
+    <script src="/js/jsnes_helpers.js"></script>
+    <script>
+      const canvas = new Canvas(document.getElementById('sprites-canvas'));
+      const nes = new jsnes.NES({
+        onFrame: (frameBuffer) => {
+          canvas.convertNESBuffer(frameBuffer);
+          canvas.writeBuffer();
+        },
+        onAudioSample: (left, right) => {
+          return;
+        }
+      });
+
+      fetchAndRunROM('/roms/spritegraphics.nes', nes, createFrameHandler);
+    </script>
   </body>
 </html>

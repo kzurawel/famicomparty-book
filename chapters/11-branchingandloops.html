@@ -1,0 +1,113 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Famicom Party | More Assembly: Branching and Loops</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/prism.css">
+		<!-- Matomo -->
+		<script type="text/javascript">
+			var _paq = _paq || [];
+			/* tracker methods like "setCustomDimension" should be called before "trackPageView" */
+			_paq.push(['trackPageView']);
+			_paq.push(['enableLinkTracking']);
+			(function() {
+				var u="//analytics.famicom.party/";
+				_paq.push(['setTrackerUrl', u+'piwik.php']);
+				_paq.push(['setSiteId', '1']);
+				var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+				g.type='text/javascript'; g.async=true; g.defer=true; g.src=u+'piwik.js'; s.parentNode.insertBefore(g,s);
+			})();
+		</script>
+		<!-- End Matomo Code -->
+  </head>
+  <body>
+    <header class="header-wrapper">
+      <h1 class="site-title"><a href="/"><img src="/img/famicomparty.png" alt="famicom party"></a></h1>
+			<nav class="header-links">
+        <ul>
+          <li><a href="https://famicom.party">Home</a></li>
+          <li><a href="https://book.famicom.party">The Book</a></li>
+          <li><a href="https://blog.famicom.party">The Blog</a></li>
+        </ul>
+			</nav>
+    </header>
+    <div class="wrapper">
+      <article>
+        <h1>11. More Assembly: Branching and Loops</h1>
+
+        <section>
+          <p>
+            At the end of the last chapter, we successfully drew a single sprite to the screen,
+            but doing so took a large amount of code. In this chapter, we will learn some new
+            assembly opcodes that will help us separate data from logic and, as a side effect,
+            make our code much more efficient and easier to read and reason about.
+          </p>
+
+          <h2>Flow Control in Assembly</h2>
+
+          <p>
+            With the exception of <code>JMP</code>, all of the assembly we have seen so far
+            has been completely linear: the processor reads a byte from the next memory address
+            and processes it, moving from the start of our ROM file to the end. <i>Flow control</i>
+            refers to the ability to write code that can evaluate certain conditions and
+            change which code will be executed next based on the result. For the 6502, there
+            are two forms of flow control. <code>JMP</code> is an "unconditional" <i>jump</i>
+            to a different point in the ROM (it does not perform any kind of test or evaluation).
+            The other form of flow control is called "branching", because it performs a test
+            and then moves to one of two different "branches" of code based on the result.
+          </p>
+
+          <h3>The Processor Status Register</h3>
+
+          <p>
+            The key to branching is a part of the 6502 called the <i>processor status register</i>,
+            often referred to as <code>P</code>. The status register, like all other 6502 registers,
+            is eight bits in size. Unlike the other registers, the status register is not directly
+            accessible to the programmer. Each time the processor performs an operation, the status
+            register changes to reflect the results of that operation. Each bit in the status register
+            gives information about a particular aspect of the last operation.
+          </p>
+
+          <figure>
+            <img src="/img/processorstatus.png">
+            <figcaption>The eight bits of the processor status register (NV-BDIZC).</figcaption>
+          </figure>
+        </section>
+
+        <p class="chapter-links">
+          <a href="/chapters/10-spritegraphics.html">&laquo; 10. Sprite Graphics</a>
+          <!-- <a href="/chapters/10-.html">10. &raquo;</a> -->
+        </p>
+      </article>
+    </div>
+    <footer class="footer-wrapper">
+      <div class="footer-container">
+        <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">
+          <img class="license-logo" alt="Creative Commons License" src="https://licensebuttons.net/l/by-nc-sa/4.0/88x31.png">
+        </a>
+        <p class="license-text">This work by Kevin Zurawel is licensed under a<br>
+          <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a>.
+        </p>
+      </div>
+    </footer>
+    <script src="/js/prism.js"></script>
+    <!-- <script src="/js/jsnes.min.js"></script> -->
+    <!-- <script src="/js/jsnes_helpers.js"></script> -->
+    <!-- <script> -->
+    <!--   const canvas = new Canvas(document.getElementById('sprites&#45;canvas')); -->
+    <!--   const nes = new jsnes.NES({ -->
+    <!--     onFrame: (frameBuffer) => { -->
+    <!--       canvas.convertNESBuffer(frameBuffer); -->
+    <!--       canvas.writeBuffer(); -->
+    <!--     }, -->
+    <!--     onAudioSample: (left, right) => { -->
+    <!--       return; -->
+    <!--     } -->
+    <!--   }); -->
+    <!--  -->
+    <!--   fetchAndRunROM('/roms/spritegraphics.nes', nes, createFrameHandler); -->
+    <!-- </script> -->
+  </body>
+</html>

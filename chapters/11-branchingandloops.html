@@ -74,8 +74,333 @@
             <img src="/img/processorstatus.png">
             <figcaption>The eight bits of the processor status register (NV-BDIZC).</figcaption>
           </figure>
-        </section>
 
+          <p>
+            For our purposes, the two most important bits (or "flags") of the processor status register are the
+            <code>Z</code> ("zero") and <code>C</code> ("carry") bits. The zero flag is <i>set</i>
+            (1) if the result of the last operation was zero. The zero flag is <i>cleared</i> (0) if
+            the result of the last operation was anything but zero. Similarly, the carry flag is set
+            if the result of the last operation caused a "carry", and cleared otherwise.
+          </p>
+
+          <h3>Carrying</h3>
+
+          <p>
+            While the zero flag is straightforward, the carry flag requires some additional explanation.
+            Consider what happens when we add the decimal numbers 13 and 29. If we were to perform this
+            addition by hand, we would first add the "3" from 13 to the "9" from 29. The result is 12,
+            which is too large to fit into a single decimal digit. So, we write down a "2" and <i>carry over</i>
+            the "1" into the next column to the left. Here, we add together the "1" from 13, the "2" from 29,
+            and the "1" that we carried over. The result is 4, which we write down under that column, for
+            a total of 42.
+          </p>
+
+          <p>
+            The carry flag on the 6502 performs the same function, but for bytes. An addition operation will
+            result in the carry flag being set if the result of the addition is larger than what can fit
+            in one byte (i.e. if the result is greater than 255).  We will generally use an opcode that
+            force-clears the carry flag before performing an addition, to avoid having a carry set by
+            a previous operation persist to the current addition.
+            <label for="when-to-persist-carry" class="margin-toggle">&#8853;</label>
+            <input type="checkbox" id="when-to-persist-carry" class="margin-toggle">
+            <span class="marginnote">
+              Why would you ever want to persist a previous carry flag before performing an addition?
+              <i>Not </i> clearing the carry flag allows you to add together multi-byte numbers, by first
+              adding the lowest bytes of the two numbers and letting that addition set the carry
+              flag if needed. When you add the next-lowest bytes of the two numbers, the carry flag
+              will automatically be added in.
+            </span>
+          </p>
+
+          <p>
+            Subtraction works similarly to addition, except that we will generally <i>set</i> the
+            carry flag before performing a subtraction. A subtraction operation results in the carry
+            flag being <i>cleared</i> if the number being subtracted is larger than the number it is being
+            subtracted from. As an example, if we subtract 17 from 15, the result is -2. This number is less
+            than zero, so in order to carry out the subtraction we need to "borrow" from the next-lowest
+            column, using up the carry flag that we set before starting the subtraction.
+          </p>
+
+          <p>
+            It is important to note here that much like single-digit decimal numbers, bytes "wrap around"
+            when adding beyond 255 or subtracting beyond zero. If a byte (or register, or memory value) is
+            currently at 253 and you add 7, the result is not 260 &mdash; it is 4, with the carry flag set.
+            Similarly, if a byte's value is 4 and you subtract 7, the result is 253 with a cleared carry flag,
+            not -3.
+          </p>
+
+          <p>
+            We will cover how to actually perform addition and subtraction in a later chapter; for now,
+            all you need to know is that the instructions the processor executes will change the values
+            of the zero and carry flags in the processor status register.
+          </p>
+
+          <h2>Branching</h2>
+
+          <p>
+            Now that you know about the processor status register, we can use the results of operations
+            to branch to different parts of our code. The simplest way to use branching is to build a
+            loop that does something 256 times. In its most basic form, it looks like this:
+          </p>
+
+          <pre class="code line-numbers"><code class="lang-asm6502">  LDX #$00
+LoopStart:
+  ; do something
+  INX
+  BNE LoopStart
+  ; end of loop</code></pre>
+
+          <p>
+            Before we look at how the loop actually works, there are two new opcodes here to discuss.
+            <code>INX</code> stands for "increment X"; it adds one to the value of the X register
+            and stores it back in the X register. <code>BNE</code> stands for "Branch if Not Equal
+            to zero"; it changes the normal flow of code execution if the zero flag in the processor
+            status register is cleared (i.e., the result of the last operation was not zero).
+          </p>
+
+          <p>
+            The loop begins by loading the immediate value <code>$00</code> into the X register.
+            Next, we have a label (<code>LoopStart</code>), which will be used by our branching
+            instruction at the end of the loop. After the label, we do whatever it is that we
+            want our loop to perform, then we increment the X register. Like all math-related
+            operations, this will update the flags in the processor status register. The final
+            line of the loop checks the value of the zero flag. If the zero flag is set, nothing
+            special happens &mdash; the program just keeps on running, with whatever comes after
+            <code>; end of loop</code> being executed next. If the zero flag is cleared, then
+            <code>BNE LoopStart</code> tells the processor to find the <code>LoopStart</code>
+            label and execute whatever is located there next instead &mdash; in other words,
+            running the next iteration of the loop.
+          </p>
+
+          <p>
+            In actual operation, this loop will run 256 times. On the first iteration of the loop,
+            the value of the X register is zero. After <code>INX</code>, the value of the X register
+            is one. Since the result of <code>INX</code> was not a zero, the zero flag will be
+            cleared. When we get to <code>BNE LoopStart</code>, because the zero flag is cleared,
+            the processor will go back to the <code>LoopStart</code> label and run through the loop
+            again. This time, the X register will become two, which is still not zero, and the loop
+            will run again. Eventually, the X register's value will be 255. When we run <code>INX</code>
+            this time, the X register will "roll over" to zero, and the carry flag will be set.
+            <label for="zero-or-carry" class="margin-toggle">&#8853;</label>
+            <input type="checkbox" id="zero-or-carry" class="margin-toggle">
+            <span class="marginnote">
+              Note that in this case, we could have branched based on either the zero flag
+              or the carry flag. When the X register "rolls over" from 255 to 0, both
+              the zero and carry flags will be set.
+            </span>
+            Now that the last operation resulted in a zero, <code>BNE LoopStart</code> will no
+            longer be triggered, and the processor will continue on to whatever comes after the
+            loop.
+          </p>
+
+          <p>
+            There is one more thing to note here before we move on. After running this code
+            through our assembler and linker, all of our labels (like <code>LoopStart</code>)
+            will be stripped out and replaced with actual memory addresses. To ensure that
+            branches do not take up an undue amount of processor time, the data that follows
+            a branch command is not a memory address but a signed one-byte number that is added
+            to whatever memory address is in the program counter. As a result, the code you
+            want to branch to must be less than 127 bytes before, or less than 128 bytes after,
+            your branch instruction. If you need to branch to something that is further away,
+            you'll need to <code>JMP</code> to that label instead. This is probably not going
+            to be a common occurrence unless you are writing fairly complicated code, but
+            it's an interesting implementation detail that might lead to a hard-to-track-down
+            bug somewhere down the line.
+          </p>
+
+          <h2>A Review of Looping/Branching Opcodes</h2>
+
+          <p>
+            We've already seen <code>INX</code> and <code>BNE</code>, but these are only two
+            of the opcodes that you are likely to use for creating loops. Let's look at
+            the ten new opcodes that you should add to your toolset.
+          </p>
+
+          <h3>Incrementing and Decrementing Opcodes</h3>
+
+          <p>
+            These opcodes allow you to add or subtract by one in a single opcode. There is
+            no need to explicitly set or clear the carry flag before using one of these opcodes.
+          </p>
+
+          <p>
+            <code>INX</code> and <code>INY</code> will add one to ("increment") the X or Y
+            register, respectively.  In the opposite direction, <code>DEX</code> and
+            <code>DEY</code> will subtract one from ("decrement") the X or Y register.
+            Finally, you can use <code>INC</code> and <code>DEC</code> to increment
+            or decrement the contents of a memory address. As an example, you could
+            use <code>INC $05</code> to add one to whatever is stored at memory address
+            <code>$05</code>, and store the result back in <code>$05</code>.
+          </p>
+
+          <p>
+            All of the increment/decrement opcodes will update the values of the
+            zero and carry flags of the processor status register.
+          </p>
+
+          <h3>Branching Opcodes</h3>
+
+          <p>
+            There are branching opcodes for each flag of the processor status register.
+            Each flag has two opcodes - one that branches if the flag is set, and one
+            that branches if the flag is cleared. For our purposes, the only branching
+            opcodes you will need to use check the values of the zero and carry flags.
+          </p>
+
+          <p>
+            <code>BEQ</code> ("Branch if Equals zero") and <code>BNE</code> ("Branch if
+            Not Equals zero") will change the flow of the program if the zero flag is
+            set or cleared, respectively. <code>BCS</code> ("Branch if Carry Set") and
+            <code>BCC</code> ("Branch if Carry Cleared") do the same for the carry flag.
+            What follows each opcode should generally be a label for what code should
+            be executed next if the branching opcode's conditions are met.
+          </p>
+
+          <h2>Another Branching Example</h2>
+
+          <p>
+            I'd like to present one more example of branching. This time, our loop
+            will run eight times instead of 256.
+          </p>
+
+          <pre class="code line-numbers"><code class="lang-asm6502">  LDY #$08
+LoopTwo:
+  ; do something
+  DEY
+  BNE LoopTwo
+  ; end of loop</code></pre>
+
+          <p>
+            As in the previous loop example, here we first set up the pre-conditions
+            of our loop by setting the Y register to <code>$08</code>. Then we have
+            the label that our branching opcode will use later. After we've done
+            whatever it is that we want our loop to do on each iteration, we decrement
+            the Y register and then branch back to the start of the loop if the zero flag
+            is cleared.
+          </p>
+
+          <p>
+            In a more modern, C-like programming language (such as JavaScript), this entire
+            loop could be re-written as follows:
+          </p>
+
+          <pre class="code line-numbers"><code>for (y = 8; y != 0; y--) {
+  // do something
+}</code></pre>
+
+          <h2>Making Comparisons</h2>
+
+          <p>
+            While the loops we have seen so far are useful, they require some careful setup.
+            The loops above rely on our loop counter becoming zero in order to end the loop.
+            To make more flexible and powerful loops, we need the ability to make
+            arbitrary comparisons. In 6502 assembly, the opcodes that let us do that
+            are <code>CMP</code>, "Compare (with accumulator)", <code>CPX</code>, "Compare
+            with X register", and <code>CPY</code>, "Compare with Y register".
+          </p>
+
+          <p>
+            Each of these opcodes works by performing a subtraction, setting the zero
+            and carry flags as appropriate, and then discarding the result of the
+            subtraction. Remember that when we perform a subtraction, we first
+            set the carry flag. This means that we have three possible outcomes
+            from a comparison, based on the register value and the value we are comparing
+            it to:
+          </p>
+
+          <ul>
+            <li><i>Register is larger than comparison value</i>: Carry flag set, zero flag clear</li>
+            <li><i>Register is equal to comparison value</i>: Carry flag set, zero flag set</li>
+            <li><i>Register is smaller than comparison value</i>: Carry flag clear, zero flag clear</li>
+          </ul>
+
+          <p>
+            We can use this information to create more complicated program logic. Consider the case
+            where we load a value from memory and then check whether it is greater than, equal to,
+            or less than <code>$80</code>.
+          </p>
+
+          <pre class="code line-numbers"><code class="lang-asm6502">  LDA $06
+  CMP #$80
+  BEQ reg_was_80
+  BCS reg_gt_80
+  ; neither branch taken; register less than $80
+  ; do something here
+  JMP done_with_comparison ; jump to skip branch-specific code
+reg_was_80:
+  ; register equalled $80
+  ; do something here
+  JMP done_with_comparison ; skip the following branch
+reg_gt_80:
+  ; register was greater than $80
+  ; do something here
+  ; no need to jump because done_With_comparison is next
+done_with_comparison:
+  ; continue with rest of the program</code></pre>
+
+          <p>
+            This kind of three-way branch is fairly common. Note the presence of
+            a label to mark the end of all branch code, so that earlier code
+            can <code>JMP</code> over branch-specific code that shouldn't be
+            executed if the branch was not taken.
+          </p>
+
+          <h2>Using Comparisons in Loops</h2>
+
+          <p>
+            To close out this chapter, let's take a look at how comparisons can
+            be used to create more sophisticated loops. Here is a loop that
+            runs eight times, but counts up from zero instead of counting
+            down from eight.
+          </p>
+
+          <pre class="code line-numbers"><code class="lang-asm6502">  LDX #$00
+loop_start:
+  ; do something
+  INX
+  CPX #$08
+  BNE loop_start
+  ; loop is finished here</code></pre>
+
+          <p>
+            Here, we set the X register to zero before starting our loop. After each
+            loop iteration, we increment the X register and then compare X to
+            <code>$08</code>. If the X register does not equal eight, the zero
+            flag will not be set, and we will go back to <code>loop_start</code>.
+            Otherwise, the <code>CPX</code> will set the zero flag (because eight
+            minus eight equals zero), and the loop will be finished.
+          </p>
+
+          <p>
+            To review, in this chapter we learned the following opcodes:
+          </p>
+
+          <ul>
+            <li><code>INX</code></li>
+            <li><code>INY</code></li>
+            <li><code>INC</code></li>
+            <li><code>DEX</code></li>
+            <li><code>DEY</code></li>
+            <li><code>DEC</code></li>
+            <li><code>BNE</code></li>
+            <li><code>BEQ</code></li>
+            <li><code>BCC</code></li>
+            <li><code>BCS</code></li>
+            <li><code>CMP</code></li>
+            <li><code>CPX</code></li>
+            <li><code>CPY</code></li>
+          </ul>
+
+          <p>
+            That's 13 more opcodes to add to your toolset!
+          </p>
+
+          <p>
+            Next chapter, we will re-factor our code to take advantage
+            of loops and comparisons, in preparation for creating
+            background graphics.
+          </p>
+        </section>
         <p class="chapter-links">
           <a href="/chapters/10-spritegraphics.html">&laquo; 10. Sprite Graphics</a>
           <!-- <a href="/chapters/10-.html">10. &raquo;</a> -->

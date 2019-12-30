@@ -1,0 +1,282 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Famicom Party | Practical Loops</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/prism.css">
+		<!-- Matomo -->
+		<script type="text/javascript">
+			var _paq = _paq || [];
+			/* tracker methods like "setCustomDimension" should be called before "trackPageView" */
+			_paq.push(['trackPageView']);
+			_paq.push(['enableLinkTracking']);
+			(function() {
+				var u="//analytics.famicom.party/";
+				_paq.push(['setTrackerUrl', u+'piwik.php']);
+				_paq.push(['setSiteId', '1']);
+				var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+				g.type='text/javascript'; g.async=true; g.defer=true; g.src=u+'piwik.js'; s.parentNode.insertBefore(g,s);
+			})();
+		</script>
+		<!-- End Matomo Code -->
+  </head>
+  <body>
+    <header class="header-wrapper">
+      <h1 class="site-title"><a href="/"><img src="/img/famicomparty.png" alt="famicom party"></a></h1>
+			<nav class="header-links">
+        <ul>
+          <li><a href="https://famicom.party">Home</a></li>
+          <li><a href="https://book.famicom.party">The Book</a></li>
+          <li><a href="https://blog.famicom.party">The Blog</a></li>
+        </ul>
+			</nav>
+    </header>
+    <div class="wrapper">
+      <article>
+        <h1>12. Practical Loops</h1>
+
+        <section>
+          <p>
+            Now that you know how to create loops for various purposes, it's time
+            to put that knowledge to use cleaning up our existing code. Using loops
+            will make your assembly code cleaner, more readable, and easier to extend
+            in the future.
+          </p>
+
+          <p>
+            To make full use of loops, we will pair the looping opcodes we learned last
+            chapter with a new <i>addressing mode</i>. Back in
+            <a href="/chapters/05-6502assembly.html">Chapter 5</a>, when we first talked
+            about opcodes, two addressing modes were introduced: <i>absolute</i> mode
+            (e.g., <code>LDA $8001</code>) and <i>immediate</i> mode (e.g.,
+            <code>LDA #$a0</code>). Now, we will learn a third addressing mode:
+            <i>indexed mode</i>.
+          </p>
+
+          <h2>Indexed Mode</h2>
+
+          <p>
+            Indexed mode combines a fixed, absolute memory address with the variable contents
+            of an index register (hence the name "index register"). To use indexed
+            addressing mode, write a memory address, a comma, and then a register name.
+          </p>
+
+          <pre class="code"><code class="lang-asm6502">  LDA $8000,X</code></pre>
+
+          <p>
+            The example code above will fetch the contents of memory address (<code>$8000</code>
+            + the value of the X register). If the current value of the X register is <code>$05</code>,
+            then the command <code>LDA $8000,X</code> will fetch the contents of memory
+            address <code>$8005</code>.
+          </p>
+
+          <p>
+            Using indexed mode allows us to perform actions across a range of memory addresses
+            with ease. As a simple example, here is a code snippet that will set the
+            256 bytes of memory from <code>$3000</code> to <code>$30FF</code> to <code>$00</code>.
+          </p>
+
+          <pre class="code line-numbers"><code class="lang-asm6502">  LDA #$00
+  TAX
+clear_zeropage:
+  STA $3000,X
+  INX
+  BNE clear_zeropage</code></pre>
+
+          <p>
+            To review, line 1 above sets the accumulator to zero (<code>#$00</code>),
+            and then line 2 copies that zero to the X register. Line 4 stores the zero
+            from the accumulator to memory address (<code>$3000</code> plus X register), which
+            will be <code>$3000</code> the first time through the loop. Line 5 increments the X
+            register, and then line 6 checks the status of the zero flag in the
+            processor status register. If the last operation was not equal to zero,
+            we return to the label at line 3. When we increment the X register from
+            zero to one, the result of the last operation is one, so the zero
+            flag will not be set and the loop will repeat again. The next time
+            through the loop, when we reach line 4, the zero from the accumulator
+            will be stored again at memory address (<code>$3000</code> plus X register), which
+            will now be memory address <code>$3001</code>. The loop will repeat until
+            the X register is already <code>$ff</code> and the increment at line 5
+            changes the X register to <code>$00</code>.
+          </p>
+
+          <h2>Loading Palettes and Sprites</h2>
+
+          <p>
+            Now that you understand indexed mode, let's use it to simplify our
+            existing code for loading palettes and sprites. In our existing code
+            from Chapter 10, palette and sprite loading is tedious, repetitive,
+            and error-prone. This is in large part because the code tightly mixes
+            <i>data</i> and <i>logic</i>. By using loops and indexed addressing,
+            we can separate the palette and sprite data from the code that
+            sends that data to the PPU, making it easier to update the data
+            without inadvertently breaking things.
+          </p>
+
+          <p>
+            Our code from Chapter 10 to load palette data looks like this:
+          </p>
+
+          <pre class="code line-numbers" data-start="21"><code class="lang-asm6502">  ; write a palette
+  LDX PPUSTATUS
+  LDX #$3f
+  STX PPUADDR
+  LDX #$00
+  STX PPUADDR
+  LDA #$29
+  STA PPUDATA
+  LDA #$19
+  STA PPUDATA
+  LDA #$09
+  STA PPUDATA
+  LDA #$0f
+  STA PPUDATA</code></pre>
+
+          <p>
+            Let's separate out the palette values and store them somewhere else.
+            The palette values here are read-only data, so we will store them
+            in the <code>RODATA</code> segment and not in the current <code>CODE</code>
+            segment. It will look something like this:
+          </p>
+
+          <pre class="code line-numbers" data-start="60"><code class="lang-asm6502">.segment "RODATA"
+palettes:
+.byte $29, $19, $09, $0f</code></pre>
+
+          <p>
+            We set a label (<code>palettes</code>) to easily identify the start of our
+            palette data, and then we use the <code>.byte</code> directive to tell the
+            assembler "what follows is a series of plain data bytes, do not try to
+            interpret them as opcodes".
+          </p>
+
+          <p>
+            Next, we will need to adjust our palette-writing code to loop over the
+            data in <code>RODATA</code>. We'll keep lines 21-26 above that set the
+            PPU address to <code>$3f00</code>, but starting at line 27, we'll make
+            use of a loop:
+          </p>
+
+          <pre class="code line-numbers" data-start="27"><code class="lang-asm6502">load_palettes:
+  LDA palettes,X
+  STA PPUDATA
+  INX
+  CPX #$04
+  BNE load_palettes</code></pre>
+
+          <p>
+            Instead of hard-coding each palette value, we load it as "the address of
+            the <code>palettes</code> label plus the value of the X register".
+            By incrementing the X register each time through the loop (<code>INX</code>),
+            we can sequentially access all of the palette values.
+          </p>
+
+          <p>
+            Note that to end the loop, we are comparing against <code>#$04</code>.
+            This ensures that we will run this loop for four, and only four, values.
+            If we set the comparison operand to something larger, we could end up reading
+            memory beyond what we intended as palette storage, which can have
+            unpredictable effects.
+          </p>
+
+          <p>
+						Now that our palettes are loading in a cleaner fashion, let's turn
+            our attention to sprite data. Just like with palettes, we can store
+            our sprite data in <code>RODATA</code> and read it with a loop.
+            The current sprite loading code looks like this:
+          </p>
+
+          <pre class="code line-numbers" data-start="36"><code class="lang-asm6502">  ; write sprite data
+  LDA #$70
+  STA $0200
+  LDA #$05
+  STA $0201
+  LDA #$00
+  STA $0202
+  LDA #$80
+  STA $0203</code></pre>
+
+					<p>
+						Following the same process as with the sprites, our new sprite loading code
+						will look like this:
+					</p>
+
+					<pre class="code line-numbers" data-start="36"><code class="lang-asm6502">  ; write sprite data
+  LDX #$00
+load_sprites:
+  LDA sprites,X
+  STA $0200,X
+  INX
+  CPX #$04
+  BNE load_sprites</code></pre>
+
+          <p>
+            This code is subtly different from the palette loading code. Note that on line
+            40, instead of writing to a fixed address (<code>PPUDATA</code>), we use indexed
+            mode to increment the address to <i>write to</i> as well as the address to <i>read from</i>.
+          </p>
+
+          <p>
+            One more step: we still need to move our sprite data into <code>RODATA</code>. Here
+            is our sprite data, in a much more readable, one-line-per-sprite format:
+          </p>
+
+          <pre class="code line-numbers" data-start="63"><code class="lang-asm6502">sprites:
+.byte $70, $05, $00, $80</code></pre>
+
+          <h2>Homework</h2>
+
+          <p>
+            Now that you have seen how to use loops and branching to make assembly code
+            more readable and maintainable, it's time to try them out for yourself.
+            Extend the existing code to load four full palettes (with colors of your
+            choosing) and to draw at least four sprites to the screen. You'll need
+            to modify the palette and sprite data in <code>RODATA</code> as well as
+            change the loop counters in the palette-loading and sprite-loading loops.
+            Don't forget to re-assemble your source files and link them into a new
+            .nes file (see the end of
+            <a href="/chapters/08-refactoring.html">Chapter 8</a> for a refresher).
+          </p>
+
+          <p>
+            All code from this chapter can be downloaded in a <a href="/projects/12-practicalloops.zip">zip file</a>.
+          </p>
+
+        </section>
+        <p class="chapter-links">
+          <a href="/chapters/11-branchingandloops.html">&laquo; 11. More Assembly: Branching and Loops</a>
+          <!-- <a href="/chapters/10-.html">10. &raquo;</a> -->
+        </p>
+      </article>
+    </div>
+    <footer class="footer-wrapper">
+      <div class="footer-container">
+        <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">
+          <img class="license-logo" alt="Creative Commons License" src="https://licensebuttons.net/l/by-nc-sa/4.0/88x31.png">
+        </a>
+        <p class="license-text">This work by Kevin Zurawel is licensed under a<br>
+          <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a>.
+        </p>
+      </div>
+    </footer>
+    <script src="/js/prism.js"></script>
+    <!-- <script src="/js/jsnes.min.js"></script> -->
+    <!-- <script src="/js/jsnes_helpers.js"></script> -->
+    <!-- <script> -->
+    <!--   const canvas = new Canvas(document.getElementById('sprites&#45;canvas')); -->
+    <!--   const nes = new jsnes.NES({ -->
+    <!--     onFrame: (frameBuffer) => { -->
+    <!--       canvas.convertNESBuffer(frameBuffer); -->
+    <!--       canvas.writeBuffer(); -->
+    <!--     }, -->
+    <!--     onAudioSample: (left, right) => { -->
+    <!--       return; -->
+    <!--     } -->
+    <!--   }); -->
+    <!--  -->
+    <!--   fetchAndRunROM('/roms/spritegraphics.nes', nes, createFrameHandler); -->
+    <!-- </script> -->
+  </body>
+</html>

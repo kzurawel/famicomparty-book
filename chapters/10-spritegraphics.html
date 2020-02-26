@@ -311,7 +311,7 @@ PPUSTATUS = $2002
 PPUADDR   = $2006
 PPUDATA   = $2007
 OAMADDR   = $2003
-OAMDMA    = $2004</code></pre>
+OAMDMA    = $4014</code></pre>
 
           <p>
             We now have a reliable and automated way to keep OAM up to date.
@@ -454,6 +454,7 @@ OAMDMA    = $2004</code></pre>
 
           <pre class="code line-numbers" data-start="20"><code class="lang-asm6502">.proc main
   ; write a palette
+  LDX PPUSTATUS
   LDX #$3f
   STX PPUADDR
   LDX #$00

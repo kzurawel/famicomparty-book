@@ -58,8 +58,8 @@
             <li>A text editor (your choice)</li>
             <li>An assembler/linker (ca65 and ld65)</li>
             <li>An emulator (Nintaco)</li>
-            <li>A graphics tool that can read/save NES formatted images (NES Screen Tool)</li>
-            <li>A music composition tool (FamiTracker)</li>
+            <li>A graphics tool that can read/save NES formatted images (NESTool)</li>
+            <li>A music composition tool (FamiStudio)</li>
           </ul>
 
           <h2>Text Editor</h2>
@@ -151,58 +151,61 @@ make</pre>
             The NES stores graphics in a very different format from common image types like JPEG or PNG. We
             will need a program that can work with NES images. There are plugins for large graphics
             packages like Photoshop or GIMP, but I like using a smaller, purpose-built tool for this.
-            For this book, we will be using Shiru's <a href="https://shiru.untergrund.net/software.shtml">NES Screen Tool</a>.
-            <label for="nes-screen-tool" class="margin-toggle">&#8853;</label>
-            <input id="nes-screen-tool" type="checkbox" class="margin-toggle">
+            For this book, we will be using <a href="https://github.com/jpwhiting/nestool">NESTool</a>,
+            a cross-platform version of
+            <a href="https://shiru.untergrund.net/software.shtml">NES Screen Tool</a>.
+            <label for="nes-tool" class="margin-toggle">&#8853;</label>
+            <input id="nes-tool" type="checkbox" class="margin-toggle">
             <span class="marginnote">
-              <img src="/img/nesst.png"><br>
-              NES Screen Tool.
+              <img src="/img/nestool.png"><br>
+              NESTool.
             </span>
           </p>
           <h3>Windows</h3>
           <p>
-            Just download NES Screen Tool from the link above, and double-click "nesst.exe" to run it.
+            Download a <a href="https://bit.ly/nestool-win">pre-built Windows binary</a> (for 64-bit
+            systems). Alternatively, you can <a href="https://github.com/jpwhiting/nestool">download</a>
+            the source code and build it yourself; it is a standard Qt application and does
+            not require any other dependencies.
           </p>
           <h3>Mac</h3>
           <p>
-            NES Screen Tool is a Windows program, but thankfully it runs well on Mac with a Windows
-            compatibility layer. Download my <a href="https://bit.ly/nesscreentoolmac">Mac wrapper</a>,
-            unzip it and place it in your Applications folder. Alternatively, you can use Homebrew to install
-            WINE (<code>brew install wine</code>), then launch it from the command line. E.g.
-            <code>wine ~/Downloads/NESst/nesst.exe</code>.
+            Download a <a href="https://bit.ly/nestool-macos">pre-built Mac OS binary</a>. Double-click
+            the .dmg file to open it and drag the NESTool app to your Applications folder. You will
+            need to right-click the application and choose "Open" the first time you try to
+            run the program, since it is not "notarized" by Apple.
           </p>
           <h3>Linux</h3>
           <p>
-            Use your distribution's package manager to install WINE (e.g. <code>apt-get install wine</code>),
-            then launch NES Screen Tool from the command line as above under "Mac". On some distributions,
-            installing WINE automatically associates it with .exe files; you may be able to just
-            double-click nesst.exe.
+            Download the <a href="https://github.com/jpwhiting/nestool">source code</a> and build
+            it as a standard Qt application.
           </p>
 
           <h2>Music Composition Tools</h2>
           <p>
             As with graphics, NES audio is a set of instructions to an audio processor rather than something
-            like an MP3. The most popular program for creating NES audio is <a href="http://www.famitracker.com/">FamiTracker</a>,
-            which we will use later in this book.
-            <label for="famitracker" class="margin-toggle">&#8853;</label>
-            <input id="famitracker" type="checkbox" class="margin-toggle">
+            like an MP3. The most popular program for creating NES audio is <a href="http://www.famitracker.com/">FamiTracker</a>, which is powerful but complex and Windows-only. For this book, we will be using
+            <a href="https://famistudio.org">FamiStudio</a>, which is cross-platform, has a friendlier
+            interface, and outputs directly into an easy-to-integrate format.
+            <label for="famistudio" class="margin-toggle">&#8853;</label>
+            <input id="famistudio" type="checkbox" class="margin-toggle">
             <span class="marginnote">
-              <img src="/img/famitracker.jpg"><br>
-              FamiTracker.
+              <img src="/img/famistudio.png"><br>
+              FamiStudio.
             </span>
           </p>
-          <h3>Windows</h3>
+          <h3>Windows / Mac</h3>
           <p>
-            Download FamiTracker 0.4.6 from the link above and unzip it. Double-click "FamiTracker.exe" to open it.
-          </p>
-          <h3>Mac</h3>
-          <p>
-            As with NES Screen Tool, I have made a <a href="https://bit.ly/famitrackermac">Mac wrapper</a> for
-            FamiTracker, or you can run it using WINE directly.
+            Download the <a href="https://github.com/BleuBleu/FamiStudio/releases">latest release from GitHub</a>.
           </p>
           <h3>Linux</h3>
           <p>
-            Use WINE to launch FamiTracker, as with NES Screen Tool above.
+            Unfortunately, FamiStudio is not yet fully functional on Linux. While I am hopeful
+            that this situation will change in the near future, in the meantime, Linux users
+            can download <a href="http://www.famitracker.com/">FamiTracker 0.4.6</a> and run it via WINE.
+            FamiTracker will not be covered in this book, but there are several excellent
+            <a href="https://www.youtube.com/watch?v=UbGfosQHfm0">tutorials</a> available, and
+            FamiTracker output can be easily converted into a format suitable for the FamiTone2 library.
           </p>
 
           <hr>

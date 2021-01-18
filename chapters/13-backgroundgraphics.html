@@ -339,13 +339,10 @@ clear_oam:
           <p>
             To help you get started, here is
             <a href="/projects/13-backgroundgraphics.zip">all of the code from this chapter</a>.
-            Here is what our project looks like so far when opened in Nintaco:
+            Here is what our project looks like so far running in an emulator:
           </p>
 
-          <figure>
-            <img src="/img/backgroundsdotnes.png" />
-            <figcaption>The final .nes file.</figcaption>
-          </figure>
+          <canvas id="backgrounds-canvas" class="nes-example" width="256" height="240"></canvas>
 
           <p>
             For homework, add a new tile to the background pattern table
@@ -379,21 +376,21 @@ clear_oam:
       </div>
     </footer>
     <script src="/js/prism.js"></script>
-    <!-- <script src="/js/jsnes.min.js"></script> -->
-    <!-- <script src="/js/jsnes_helpers.js"></script> -->
-    <!-- <script> -->
-    <!--   const canvas = new Canvas(document.getElementById('sprites&#45;canvas')); -->
-    <!--   const nes = new jsnes.NES({ -->
-    <!--     onFrame: (frameBuffer) => { -->
-    <!--       canvas.convertNESBuffer(frameBuffer); -->
-    <!--       canvas.writeBuffer(); -->
-    <!--     }, -->
-    <!--     onAudioSample: (left, right) => { -->
-    <!--       return; -->
-    <!--     } -->
-    <!--   }); -->
-    <!--  -->
-    <!--   fetchAndRunROM('/roms/spritegraphics.nes', nes, createFrameHandler); -->
-    <!-- </script> -->
+    <script src="/js/jsnes.min.js"></script>
+    <script src="/js/jsnes_helpers.js"></script>
+    <script>
+      const canvas = new Canvas(document.getElementById('backgrounds-canvas'));
+      const nes = new jsnes.NES({
+        onFrame: (frameBuffer) => {
+          canvas.convertNESBuffer(frameBuffer);
+          canvas.writeBuffer();
+        },
+        onAudioSample: (left, right) => {
+          return;
+        }
+      });
+
+      fetchAndRunROM('/roms/backgrounds.nes', nes, createFrameHandler);
+    </script>
   </body>
 </html>

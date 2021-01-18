@@ -162,18 +162,18 @@ figure {
   -webkit-margin-end: 0;
   margin: 2em 0 4em 0;
   overflow: hidden;
+  text-align: center;
 }
 
 figcaption {
-  float: right;
-  clear: right;
   margin-top: 0;
   margin-bottom: 0;
   font-size: 1.1rem;
   line-height: 1.6;
   vertical-align: baseline;
   position: relative;
-  max-width: 60%;
+  max-width: 80%;
+  padding: 0.5em 10%;
 }
 
 figure.fullwidth figcaption {

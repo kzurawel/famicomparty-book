@@ -49,7 +49,10 @@ pre[class*="language-"] {
   white-space: normal;
 }
 
-.token.comment,
+.token.comment {
+  color: #ccf;
+}
+
 .token.prolog,
 .token.doctype,
 .token.cdata {

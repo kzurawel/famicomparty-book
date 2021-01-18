@@ -1,0 +1,399 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Famicom Party | Background Graphics</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/prism.css">
+		<!-- Matomo -->
+		<script type="text/javascript">
+			var _paq = _paq || [];
+			/* tracker methods like "setCustomDimension" should be called before "trackPageView" */
+			_paq.push(['trackPageView']);
+			_paq.push(['enableLinkTracking']);
+			(function() {
+				var u="//analytics.famicom.party/";
+				_paq.push(['setTrackerUrl', u+'piwik.php']);
+				_paq.push(['setSiteId', '1']);
+				var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+				g.type='text/javascript'; g.async=true; g.defer=true; g.src=u+'piwik.js'; s.parentNode.insertBefore(g,s);
+			})();
+		</script>
+		<!-- End Matomo Code -->
+  </head>
+  <body>
+    <header class="header-wrapper">
+      <h1 class="site-title"><a href="/"><img src="/img/famicomparty.png" alt="famicom party"></a></h1>
+			<nav class="header-links">
+        <ul>
+          <li><a href="https://famicom.party">Home</a></li>
+          <li><a href="https://book.famicom.party">The Book</a></li>
+          <li><a href="https://blog.famicom.party">The Blog</a></li>
+        </ul>
+			</nav>
+    </header>
+    <div class="wrapper">
+      <article>
+        <h1>13. Background Graphics</h1>
+
+        <section>
+          <p>
+            Before we start animating sprites around the screen, I'd like to introduce
+            you to how background graphics work on the NES. We explored the mechanics
+            behind background graphics in <a href="/chapters/09-theppu.html">Chapter 9</a>,
+            but in this chapter we'll look at the actual code required to display
+            backgrounds.
+          </p>
+
+          <h2>The Background Pattern Table</h2>
+
+          <p>
+            First, you'll need graphical tiles in the background pattern table. The PPU
+            has two pattern tables for tiles, one for sprites and one for backgrounds.
+            In the previous chapters, we added some tiles to the sprite pattern table.
+            Now, we'll need to add tiles to the background table.
+          </p>
+
+          <p>
+            For this chapter, I've updated the CHR file to include some pre-made
+            background tiles. There are tiles for numbers and letters (to allow
+            us to display text to the player), solid-colored squares of each of
+            the four palette colors, and a few "starfield" tiles. You can view
+            (and edit) these tiles in NESTool. Our long-term goal is going to be
+            the creation of a vertically-scrolling shooter game in the style of
+            <i>Star Soldier</i>.
+            <label for="star-soldier" class="margin-toggle">&#8853;</label>
+            <input type="checkbox" id="star-soldier" class="margin-toggle">
+            <span class="marginnote">
+              <img src="/img/star_soldier.png" />
+              <i>Star Soldier</i>, developed by Hudson Soft and released for the Famicom in 1986
+              and the NES in 1988, is a vertical-scrolling shooter series.
+            </span>
+          </p>
+
+          <figure>
+            <img src="/img/starfieldchr.png" />
+            <figcaption>The new background tiles in Bank B of "starfield.chr"</figcaption>
+          </figure>
+
+          <p>
+            To make use of these new background tiles, we will need to write a nametable.
+            By default, the attribute table will be all zeroes, meaning that every
+            tile in the nametable will be drawn with the first palette. To use other
+            palettes, we will need to write an attribute table as well.
+          </p>
+
+          <h2>Writing a Nametable</h2>
+
+          <p>
+            First, let's figure out where to put our new tiles in the nametable. We only
+            need to write to nametable addresses where we intend to place a tile &mdash;
+            everywhere else, the default background color from our palettes will be used.
+            In NESTool, click a tile from the right side of the screen, then click anywhere
+            in the large area on the left to "draw" with the tile. Here is the example
+            background that we will use:
+          </p>
+
+          <figure>
+            <img src="/img/starbackground.png" />
+            <figcaption>Placing background tiles in NESTool.</figcaption>
+          </figure>
+
+          <p>
+            Once you have an arrangement that you like, you can save what you have so
+            far to a <code>.nam</code> file. From NESTool's menus, select Nametable &rarr;
+            Save NameTable As..., then choose a filename and a location to save the file.
+            NESTool will create two files, a <code>.nam</code> file (the background
+            arrangement, in a binary format that NESTool can load from) and a
+            <code>.h</code> file (a C header file, which you can safely delete). To
+            reload your background later for editing, open NESTool and select Nametable &rarr;
+            Open NameTable..., and select the <code>.nam</code> file you saved earlier.
+          </p>
+
+          <p>
+            When you hover over any tile in the large left pane, the status bar at the bottom
+            of NESTool shows you useful information for writing nametables and attribute tables.
+            As discussed in <a href="/chapters/09-theppu.html">Chapter 9</a>, the NES has four
+            nametables, the first of which starts at PPU memory address <code>$2000</code>.
+            The bottom status bar of NESTool shows the "nametable offset" and "attribute offset"
+            for each tile position &mdash; that is, how many tiles beyond the start of the
+            nametable or attribute table it is. To make things easier, it also shows the address
+            of the tile location in each nametable and attribute table.
+          </p>
+
+          <figure>
+            <img src="/img/nestoolstatusbar.png" />
+            <figcaption>The bottom status bar of NESTool, displaying nametable and
+            attribute table offsets and the corresponding PPU memory locations for
+            that offset in each of the four nametables and attribute tables.</figcaption>
+          </figure>
+
+          <p>
+            We can use this information to fill out our nametable. As you might remember,
+            the nametable is just a series of tile numbers; palette selection occurs
+            in the attribute table. To create the nametable, we need to write the appropriate
+            tile number to each nametable address as displayed in NESTool. Let's start with
+            the "large" star tile (tile number <code>$2f</code>, as you can see by
+            hovering over the tile in the right-side "Tileset" window and looking at the
+            status bar at the bottom of the application window). From hovering over
+            the places where the large star tile is used, we can see that we need to
+            write the value <code>$2f</code> to the following addresses in PPU memory:
+          </p>
+
+          <ul>
+            <li><code>$206b</code></li>
+            <li><code>$2157</code></li>
+            <li><code>$2223</code></li>
+            <li><code>$2352</code></li>
+          </ul>
+
+          <p>
+            The process is the same as what we have used before for palettes and
+            sprites: read from <code>PPUSTATUS</code>, write the address you want
+            to send data to to <code>PPUADDR</code> ("high"/left byte first, then
+            "low"/right byte), and then send the actual data to <code>PPUDATA</code>.
+            Previously, we have used loops to do this, taking advantage of the way
+            sequential writes to <code>PPUDATA</code> automatically increase the
+            address by one. This time, though, we need to write to totally non-linear
+            memory addresses, so we'll need to repeat the process in full for each
+            background tile. Here is the code to write the first "large star" to
+            the nametable:
+          </p>
+
+          <pre class="code line-numbers" data-start="46"><code class="lang-asm6502">  ; write a nametable
+  ; big stars first
+  LDA PPUSTATUS
+  LDA #$20
+  STA PPUADDR
+  LDA #$6b
+  STA PPUADDR
+  LDX #$2f
+  STX PPUDATA</code></pre>
+
+          <p>
+            The one thing we can do to save on the number of commands we need to enter
+            is to store the tile number in a different register from what we use
+            to read <code>PPUSTATUS</code> and write to <code>PPUADDR</code>; here
+            we are using the X register for the tile number, so that subsequent
+            writes of the same tile to the nametable will not require re-loading it.
+          </p>
+
+          <p>
+            We can use the same procedure to add the two varieties of "small" star
+            (<code>$2d</code> and <code>$2e</code>) to the nametable. To use different
+            colors for the tiles, we will need to write an attribute table as well.
+          </p>
+
+          <h2>The Attribute Table</h2>
+
+          <p>
+            Background tile palettes are set via an attribute table, which uses one
+            byte to store palette information for a 4x4 square of background tiles.
+            To change the palettes used for a particular tile, first hover over that
+            tile in the left-side nametable display and note the "Attribute offset"
+            for the tile. Next, we need to figure out which 2x2 area of tiles
+            (top left, top right, bottom left, or bottom right) the tile we want
+            to change is part of. Unfortunately, this is currently only possible
+            within NESTool by hovering over adjacent tiles to find the boundaries
+            of a given attribute offset. With these two pieces of information,
+            we can construct the appropriate byte to write into the attribute
+            table at that offset.
+          </p>
+
+          <p>
+            As an example, let's change the palette used to draw the first
+            "large star" in the nametable. By hovering over it in the nametable
+            viewer, we can find the attribute offset (<code>$02</code>) as well
+            as where within the 4x4 set of tiles our chosen tile is located
+            (the bottom-right 2x2 area &mdash; the full 4x4 area for this
+            attribute offset is highlighted below in red).
+          </p>
+
+          <figure>
+            <img src="/img/findattributeoffset.png" />
+            <figcaption>Finding attribute offset information for the "large star"
+            at the top of the nametable.</figcaption>
+          </figure>
+
+          <p>
+            Each byte of the attribute table holds palette information for
+            four 2x2 areas of background tiles, using two bits for each area.
+            From left to right, the eight bits in an attribute table byte
+            hold the palette number for bottom-right, bottom-left, top-right,
+            and top-left 2x2 areas.
+          </p>
+
+          <figure>
+            <img src="/img/attribute-table.png" />
+            <figcaption>Layout of bits in an attribute table byte.</figcaption>
+          </figure>
+
+          <p>
+            In this case, we want to change the palette for the bottom-right
+            section of an attribute table byte, so we will need to change
+            the leftmost two bits of the byte. By default, the attribute table
+            is all zeroes, meaning every 2x2 area of the background uses the
+            first background palette. Let's change our tile to use the second
+            palette (<code>01</code>) instead of the first palette (<code>00</code>).
+            To change just the bottom-right 2x2 area, and leave the other parts
+            of this 4x4 area with the first palette, we would write the byte
+            <code>%01000000</code> to the appropriate PPU memory address (<code>$23c2</code>).
+            Here is what that would look like:
+          </p>
+
+
+          <pre class="code line-numbers" data-start="158"><code class="lang-asm6502">  ; finally, attribute table
+  LDA PPUSTATUS
+  LDA #$23
+  STA PPUADDR
+  LDA #$c2
+  STA PPUADDR
+  LDA #%01000000
+  STA PPUDATA</code></pre>
+
+          <p>
+            Remember that this will set <i>all</i> tiles in that 2x2 region to use the
+            second palette. In this case, the background tiles we are setting are relatively
+            far apart, but if your backgrounds are more "busy" you will need to think
+            carefully about where to change from one background palette to another.
+          </p>
+
+          <h2>Additional Changes</h2>
+
+          <p>
+            As our games start getting more complicated, the simple reset and
+            NMI handlers we started with will need some minor changes to prevent
+            strange (and difficult to debug) graphical glitches. In our reset
+            handler, I've added a loop that sets the Y-position of all sprites
+            off the screen (i.e. any value larger than <code>$ef</code>).
+            The state of CPU memory can be random at startup, which could result
+            in portions of the OAM buffer at <code>$0200</code> having fake
+            sprite data. This loop hides all sprites off the screen until
+            we explicitly set them ourselves, which will prevent these
+            "phantom" sprites from being visible to the player.
+          </p>
+
+          <pre class="code line-numbers" data-start="17"><code class="lang-asm6502">  LDX #$00
+  LDA #$ff
+clear_oam:
+  STA $0200,X ; set sprite y-positions off the screen
+  INX
+  INX
+  INX
+  INX
+  BNE clear_oam</code></pre>
+
+          <p>
+            Second, our NMI handler will need to set the scroll position of the
+            nametables. We will cover scrolling in detail in a later chapter,
+            but for now just know that we are setting the scroll position
+            to display the first nametable, with no scrolling. If we did not
+            explicitly set this scroll position, we could accidentally display
+            a combination of nametables at an unpredictable scroll point.
+          </p>
+
+          <pre class="code line-numbers" data-start="9"><code class="lang-asm6502">.proc nmi_handler
+  LDA #$00
+  STA OAMADDR
+  LDA #$02
+  STA OAMDMA
+  LDA #$00
+  STA $2005
+  STA $2005
+  RTI
+.endproc</code></pre>
+
+          <p>
+            Finally, now that we are using both sprites and backgrounds, we
+            need to set all eight palettes. To do so, I've expanded the
+            palette definitions in the <code>RODATA</code> segment as follows:
+          </p>
+
+          <pre class="code line-numbers" data-start="192"><code class="lang-asm6502">palettes:
+.byte $0f, $12, $23, $27
+.byte $0f, $2b, $3c, $39
+.byte $0f, $0c, $07, $13
+.byte $0f, $19, $09, $29
+
+.byte $0f, $2d, $10, $15
+.byte $0f, $19, $09, $29
+.byte $0f, $19, $09, $29
+.byte $0f, $19, $09, $29</code></pre>
+
+          <p>
+            The first four palettes are background palettes, and the second set
+            of four palettes are sprite palettes. Note that I have also changed
+            the colors used in the first sprite palette to make the "spaceship"
+            look better.
+          </p>
+
+          <p>
+            Since we now need to write more than just four palette bytes, I've
+            changed the loop that writes palettes to use <code>CPX #$20</code>
+            (16 values) instead of <code>CPX #$04</code>.
+          </p>
+
+          <h2>Homework</h2>
+
+          <p>
+            To help you get started, here is
+            <a href="/projects/13-backgroundgraphics.zip">all of the code from this chapter</a>.
+            Here is what our project looks like so far when opened in Nintaco:
+          </p>
+
+          <figure>
+            <img src="/img/backgroundsdotnes.png" />
+            <figcaption>The final .nes file.</figcaption>
+          </figure>
+
+          <p>
+            For homework, add a new tile to the background pattern table
+            ("Bank B" in NESTool), use the new tile in a nametable,
+            and update the attribute table for the new tile to use
+            more than one palette. You can use the <code>.nam</code>
+            file provided to get your NESTool environment set up quickly.
+            Be sure to save your modified <code>.chr</code> file and
+            to re-build all .asm files each time you make changes.
+          </p>
+
+          <p>
+            Next time, we'll take a look at sprite animation and the
+            debugging tools built into Nintaco.
+          </p>
+        </section>
+        <p class="chapter-links">
+          <a href="/chapters/12-practicalloops.html">&laquo; 12. Practical Loops</a>
+          <!-- <a href="/chapters/10-.html">10. &raquo;</a> -->
+        </p>
+      </article>
+    </div>
+    <footer class="footer-wrapper">
+      <div class="footer-container">
+        <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">
+          <img class="license-logo" alt="Creative Commons License" src="https://licensebuttons.net/l/by-nc-sa/4.0/88x31.png">
+        </a>
+        <p class="license-text">This work by Kevin Zurawel is licensed under a<br>
+          <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a>.
+        </p>
+      </div>
+    </footer>
+    <script src="/js/prism.js"></script>
+    <!-- <script src="/js/jsnes.min.js"></script> -->
+    <!-- <script src="/js/jsnes_helpers.js"></script> -->
+    <!-- <script> -->
+    <!--   const canvas = new Canvas(document.getElementById('sprites&#45;canvas')); -->
+    <!--   const nes = new jsnes.NES({ -->
+    <!--     onFrame: (frameBuffer) => { -->
+    <!--       canvas.convertNESBuffer(frameBuffer); -->
+    <!--       canvas.writeBuffer(); -->
+    <!--     }, -->
+    <!--     onAudioSample: (left, right) => { -->
+    <!--       return; -->
+    <!--     } -->
+    <!--   }); -->
+    <!--  -->
+    <!--   fetchAndRunROM('/roms/spritegraphics.nes', nes, createFrameHandler); -->
+    <!-- </script> -->
+  </body>
+</html>

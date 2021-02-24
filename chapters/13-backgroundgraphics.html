@@ -60,7 +60,7 @@
             background tiles. There are tiles for numbers and letters (to allow
             us to display text to the player), solid-colored squares of each of
             the four palette colors, and a few "starfield" tiles. You can view
-            (and edit) these tiles in NESTool. Our long-term goal is going to be
+            (and edit) these tiles in NES Lightbox. Our long-term goal is going to be
             the creation of a vertically-scrolling shooter game in the style of
             <i>Star Soldier</i>.
             <label for="star-soldier" class="margin-toggle">&#8853;</label>
@@ -90,41 +90,38 @@
             First, let's figure out where to put our new tiles in the nametable. We only
             need to write to nametable addresses where we intend to place a tile &mdash;
             everywhere else, the default background color from our palettes will be used.
-            In NESTool, click a tile from the right side of the screen, then click anywhere
-            in the large area on the left to "draw" with the tile. Here is the example
-            background that we will use:
+            In NES Lightbox, click a tile from the right side of the screen, then click
+            anywhere in the large area on the left to "draw" with the tile. Here is the
+            example background that we will use:
           </p>
 
           <figure>
             <img src="/img/starbackground.png" />
-            <figcaption>Placing background tiles in NESTool.</figcaption>
+            <figcaption>Placing background tiles in NES Lightbox.</figcaption>
           </figure>
 
           <p>
             Once you have an arrangement that you like, you can save what you have so
-            far to a <code>.nam</code> file. From NESTool's menus, select Nametable &rarr;
-            Save NameTable As..., then choose a filename and a location to save the file.
-            NESTool will create two files, a <code>.nam</code> file (the background
-            arrangement, in a binary format that NESTool can load from) and a
-            <code>.h</code> file (a C header file, which you can safely delete). To
-            reload your background later for editing, open NESTool and select Nametable &rarr;
-            Open NameTable..., and select the <code>.nam</code> file you saved earlier.
+            far to a <code>.nam</code> file. From NES Lightbox's menus, select Nametables &rarr;
+            Save Nametable As..., then choose a filename and a location to save the file.
+            To reload your background later for editing, open NES Lightbox and select Nametables &rarr;
+            Open Nametable..., and select the <code>.nam</code> file you saved earlier.
           </p>
 
           <p>
             When you hover over any tile in the large left pane, the status bar at the bottom
-            of NESTool shows you useful information for writing nametables and attribute tables.
+            of NES Lightbox shows you useful information for writing nametables and attribute tables.
             As discussed in <a href="/chapters/09-theppu.html">Chapter 9</a>, the NES has four
             nametables, the first of which starts at PPU memory address <code>$2000</code>.
-            The bottom status bar of NESTool shows the "nametable offset" and "attribute offset"
-            for each tile position &mdash; that is, how many tiles beyond the start of the
+            The bottom status bar of NES Lightbox shows the "nametable offset" and "attribute offset"
+            for each tile position &mdash; that is, how many bytes beyond the start of the
             nametable or attribute table it is. To make things easier, it also shows the address
             of the tile location in each nametable and attribute table.
           </p>
 
           <figure>
-            <img src="/img/nestoolstatusbar.png" />
-            <figcaption>The bottom status bar of NESTool, displaying nametable and
+            <img src="/img/neslightbox-statusbar.png" />
+            <figcaption>The bottom status bar of NES Lightbox, displaying nametable and
             attribute table offsets and the corresponding PPU memory locations for
             that offset in each of the four nametables and attribute tables.</figcaption>
           </figure>
@@ -133,7 +130,7 @@
             We can use this information to fill out our nametable. As you might remember,
             the nametable is just a series of tile numbers; palette selection occurs
             in the attribute table. To create the nametable, we need to write the appropriate
-            tile number to each nametable address as displayed in NESTool. Let's start with
+            tile number to each nametable address as displayed in NES Lightbox. Let's start with
             the "large" star tile (tile number <code>$2f</code>, as you can see by
             hovering over the tile in the right-side "Tileset" window and looking at the
             status bar at the bottom of the application window). From hovering over
@@ -194,20 +191,19 @@
             tile in the left-side nametable display and note the "Attribute offset"
             for the tile. Next, we need to figure out which 2x2 area of tiles
             (top left, top right, bottom left, or bottom right) the tile we want
-            to change is part of. Unfortunately, this is currently only possible
-            within NESTool by hovering over adjacent tiles to find the boundaries
-            of a given attribute offset. With these two pieces of information,
-            we can construct the appropriate byte to write into the attribute
-            table at that offset.
+            to change is part of. To help with finding the boundaries of an
+            attribute table byte, click "Attribute grid" at the bottom of the
+            nametable display. This will overlay a red dashed-line grid
+            that shows the boundaries of each 4x4 tile attribute table byte's
+            coverage area.
           </p>
 
           <p>
             As an example, let's change the palette used to draw the first
             "large star" in the nametable. By hovering over it in the nametable
-            viewer, we can find the attribute offset (<code>$02</code>) as well
-            as where within the 4x4 set of tiles our chosen tile is located
-            (the bottom-right 2x2 area &mdash; the full 4x4 area for this
-            attribute offset is highlighted below in red).
+            viewer, we can find the attribute offset (<code>$02</code>), and by
+            looking at the attribute grid overlay we can see where within the 4x4
+            set of tiles our chosen tile is located (here, the bottom-right 2x2 area).
           </p>
 
           <figure>
@@ -257,6 +253,11 @@
             second palette. In this case, the background tiles we are setting are relatively
             far apart, but if your backgrounds are more "busy" you will need to think
             carefully about where to change from one background palette to another.
+            When you select a palette (by clicking any color within the palette)
+            before placing a tile in the nametable display, NES Lightbox will update
+            the underlying attribute table and update all tiles in the affected
+            2x2 area to use the new palette, which can help you identify potential
+            attribute table clashes.
           </p>
 
           <h2>Additional Changes</h2>
@@ -334,10 +335,43 @@ clear_oam:
             (16 values) instead of <code>CPX #$04</code>.
           </p>
 
+          <h2>Using NES Lightbox Projects</h2>
+
+          <p>
+            Before we move on to this chapter's homework, let's look at the
+            "Project" functionality of NES Lightbox. A "project" is a list of
+            files that make up a working environment (tileset, palettes, nametable)
+            and the currently-selected tileset bank. The project file uses
+            full paths to each file, which means that project files are
+            unfortunately not portable between different computers.
+          </p>
+
+          <p>
+            To create a project file, select Project &rarr; Save Project As...
+            from NES Lightbox's menus. Choose a name for the project file
+            and click "OK". Any files that you had previously opened will
+            be saved as part of the project file. Any tileset, palette set,
+            or nametable that had not previously been saved will be saved
+            with the name of the project. If your project is named "starfield.nesproj",
+            a nametable that had not previously been saved would be saved
+            as "starfield.nam". Once you have saved (or loaded) a project,
+            you can select Project &rarr; Save All Project Files to save
+            the project's .chr, .nam, and .pal files with the current data
+            in the application.
+          </p>
+
+          <p>
+            To restore your work environment later, select Project &rarr; Open
+            Project... and select the .nesproj file you saved earlier.
+            If any of the project's files have changed location on disk, you
+            can edit the .nesproj file with any text editor - it is simply
+            a JSON file that contains the path to each file.
+          </p>
+
           <h2>Homework</h2>
 
           <p>
-            To help you get started, here is
+            To help you get started, download
             <a href="/projects/13-backgroundgraphics.zip">all of the code from this chapter</a>.
             Here is what our project looks like so far running in an emulator:
           </p>
@@ -346,10 +380,10 @@ clear_oam:
 
           <p>
             For homework, add a new tile to the background pattern table
-            ("Bank B" in NESTool), use the new tile in a nametable,
+            ("Bank B" in NES Lightbox), use the new tile in a nametable,
             and update the attribute table for the new tile to use
             more than one palette. You can use the <code>.nam</code>
-            file provided to get your NESTool environment set up quickly.
+            file provided to get your NES Lightbox environment set up quickly.
             Be sure to save your modified <code>.chr</code> file and
             to re-build all .asm files each time you make changes.
           </p>

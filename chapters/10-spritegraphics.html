@@ -326,20 +326,20 @@ OAMDMA    = $4014</code></pre>
             is where NESTool comes in handy.
           </p>
 
-          <h2>Using NESTool</h2>
+          <h2>Using NES Lightbox</h2>
 
           <p>
-            Open NESTool. You should see a screen similar to this:
+            Open NES Lightbox. You should see a screen similar to this:
           </p>
 
           <figure>
-            <img src="/img/nestool.png">
-            <figcaption>The main screen of NESTool.</figcaption>
+            <img src="/img/neslightbox-empty.png">
+            <figcaption>The main screen of NES Lightbox.</figcaption>
           </figure>
 
           <p>
             Before we dive into creating sprites, let's take a quick tour of how
-            NESTool is organized. The large area on the left half
+            NES Lightbox is organized. The large area on the left half
             of the screen is a sort of canvas that can be used to draw
             backgrounds using tiles from a pattern table. We will not use this
             area until we start discussing background graphics. The right
@@ -348,7 +348,7 @@ OAMDMA    = $4014</code></pre>
           </p>
 
           <figure>
-            <img src="/img/nestool-tileset.png">
+            <img src="/img/neslightbox-tileset.png">
             <figcaption>The "Tileset" area.</figcaption>
           </figure>
 
@@ -358,44 +358,32 @@ OAMDMA    = $4014</code></pre>
             "Bank A / Bank B". As mentioned before, generally one pattern table
             is used for sprites, and the other is used for backgrounds. The A/B
             switch lets you flip between the two pattern tables.
-            <label for="pattern-table-corruption" class="margin-toggle">&#8853;</label>
-            <input type="checkbox" id="pattern-table-corruption" class="margin-toggle">
-            <span class="marginnote">
-              When opening a brand-new project, NESTool has a known issue where
-              switching between banks A and B can cause corruption of the pattern
-              tables (random data). I have never seen this issue when opening
-              an existing (even blank!) CHR file. Until this issue is resolved,
-              I recommend always using an existing CHR file.
-            </span>
             There is also a "Grid" button, which will turn on and off a grid
             showing the boundaries of each tile in the pattern table.
+            The "Edit" button will open a separate tile editor window once
+            you select a tile in the tileset display.
           </p>
 
           <figure>
-            <img src="/img/nestool-palettes.png">
+            <img src="/img/neslightbox-palettes.png">
             <figcaption>The "Palettes" area.</figcaption>
           </figure>
 
           <p>
             The "Palettes" area lets you preview how different palette choices will
-            affect your tiles. There are four palettes in a row. Clicking any color
+            affect your tiles. There are four numbered palettes. Clicking any color
             will change the display of the sprites in the pattern table to the
             palette that color is part of. You can change a color by clicking
-            a color in a palette twice, then choosing a color from the popup.
+            a color in a palette, then choosing a color from the display of all
+            possible colors at the bottom of this section.
             Hovering over any color in the pop-up will display the hexadecimal
-            value the NES uses for that color, as well as the six hex digit
-            RGB value of the color (for use in CSS, graphics programs, etc.).
+            value the NES uses for that color, to use in your code.
           </p>
 
-          <figure>
-            <img src="/img/nestool-palettes-detail.png">
-            <figcaption>Color selection pop-up.</figcaption>
-          </figure>
-
           <p>
-            Changing the first color in the palettes area will change the background
-            color of the large canvas area as well as the background of the pattern
-            table display.
+            Changing the first color of any palette in the palettes area will change
+            the background color of the large canvas area as well as the background
+            of the pattern table display.
           </p>
 
           <h3>Making Your Own Tiles</h3>
@@ -404,18 +392,18 @@ OAMDMA    = $4014</code></pre>
             To help you get started, I have created a starter .chr file that features
             some basic sprites and a full font in the background table. Download
             <a href="/projects/10-spritegraphics/src/graphics.chr">graphics.chr</a>
-            and open it in NESTool ("Tileset" &rarr; "Open CHR..." &rarr; select graphics.chr).
+            and open it in NES Lightbox ("Tilesets" &rarr; "Open CHR..." &rarr; select graphics.chr).
           </p>
 
           <p>
-            To edit or create tiles, double-click on the space in the pattern table
-            display for the tile you wish to alter. This will open a separate
-            tile-editing window.
+            To edit or create tiles, click on the space in the pattern table
+            display for the tile you wish to alter, then click the "Edit" button. This will
+            open a separate tile-editing window.
           </p>
 
           <figure>
-            <img src="/img/nestool-tileeditor.png">
-            <figcaption>NESTool's "Edit Tile" window.</figcaption>
+            <img src="/img/neslightbox-editor.png">
+            <figcaption>NES Lightbox's "Edit Tile" window.</figcaption>
           </figure>
 
           <p>
@@ -430,8 +418,11 @@ OAMDMA    = $4014</code></pre>
               for testing out what your tiles will look like in the palettes used
               by your game.
             </span>
+            The "Grid" button will turn on a dotted-line grid that makes it easier
+            to see where each individual pixel of the tile is. The rotate and flip
+            buttons allow you to easily make large-scale edits.
             Once you have created a set of tiles to work with, save your work by choosing
-            "Tileset" &rarr; "Save CHR".
+            "Tileset" &rarr; "Save CHR As...".
           </p>
 
           <h2>Displaying Sprites In Your Game</h2>
